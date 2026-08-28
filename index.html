@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>تسبیح دیجیتال هوشمند | ذکرینو (بله)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        emerald: { 500: '#10b981', 600: '#059669', 700: '#047857' },
+                        bale: { primary: '#10b981', bg: '#0f172a', card: '#1e293b', border: '#334155' }
+                    },
+                    fontFamily: { sans: ['Vazirmatn', 'Tahoma', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Vazirmatn', sans-serif; -webkit-tap-highlight-color: transparent; user-select: none; }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, 0.4); border-radius: 4px; }
+        .bead-shadow { box-shadow: inset -2px -2px 6px rgba(0,0,0,0.5), 2px 3px 8px rgba(0,0,0,0.3); }
+        .glow-effect { box-shadow: 0 0 25px rgba(16, 185, 129, 0.25); }
+    </style>
+</head>
+<body class="h-full bg-slate-100 text-slate-800 dark:bg-slate-950 dark:text-slate-100 transition-colors duration-300 overflow-hidden">
+
+    <div class="max-w-md mx-auto h-full flex flex-col bg-white dark:bg-slate-900 shadow-2xl relative overflow-hidden">
+
+        <header class="px-4 py-3 flex items-center justify-between border-b border-slate-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md z-20 shrink-0">
+            <div class="flex items-center space-x-3 space-x-reverse">
+                <div class="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-lg font-bold glow-effect">📿</div>
+                <div>
+                    <h1 class="font-bold text-sm leading-tight text-slate-900 dark:text-white">تسبیح هوشمند بله</h1>
+                    <p class="text-[10px] text-slate-400">ذکر و معنویت دیجیتال</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2 space-x-reverse">
+                <button onclick="app.toggleTheme()" class="w-9 h-9 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                    <i id="theme-icon" class="fa-solid fa-moon"></i>
+                </button>
+            </div>
+        </header>
+
+        <main id="main-content" class="flex-1 overflow-y-auto relative pb-20 p-4 flex flex-col justify-between select-none">
+            
+            <div class="space-y-2 shrink-0">
+                <div class="flex items-center justify-between bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 gap-2">
+                    <select id="dhikr-select" onchange="app.changeActiveDhikr(this.value)" class="bg-transparent text-xs font-bold text-slate-800 dark:text-white outline-none flex-1 cursor-pointer">
+                    </select>
+                    <select id="model-select" onchange="app.changeTasbihModel(this.value)" class="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] px-3 py-1.5 rounded-xl outline-none font-medium transition cursor-pointer">
+                        <option value="shahmaghsoudi">🟢 سبز شاه‌مقصودی</option>
+                        <option value="aqiq">🔴 عقیق قرمز</option>
+                        <option value="firoozeh">🔵 آبی فیروزه‌ای</option>
+                        <option value="khaki">🟤 خاکی چوبی</option>
+                        <option value="yellow">🟡 زرد کهربایی</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex flex-col items-center justify-center my-auto space-y-4">
+                <div class="text-center space-y-1">
+                    <span id="active-dhikr-name" class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full">ذکر صلوات</span>
+                    <div id="counter-display" class="text-7xl font-black my-2 text-slate-900 dark:text-white transition-all transform duration-150">0</div>
+                    <span id="round-info" class="text-xs text-slate-400 font-medium block">دور ۱ (دانه ۰ از ۳۳)</span>
+                </div>
+
+                <div onclick="app.incrementCount()" class="w-full max-w-[320px] h-52 rounded-3xl border-2 border-dashed border-emerald-500/30 dark:border-emerald-500/20 bg-gradient-to-b from-slate-50/50 to-slate-100/50 dark:from-slate-800/40 dark:to-slate-900/40 relative flex flex-col items-center justify-center cursor-pointer active:scale-98 transition shadow-inner overflow-hidden group">
+                    <svg class="absolute inset-0 w-full h-full pointer-events-none opacity-40" viewBox="0 0 300 200">
+                        <path d="M 20,110 Q 150,30 280,110" fill="none" stroke="currentColor" stroke-width="3" class="text-emerald-500" />
+                    </svg>
+                    <div id="beads-container" class="absolute inset-x-4 top-1/2 -translate-y-1/2 flex items-center justify-between px-2">
+                        </div>
+                    <div class="absolute bottom-3 bg-white/80 dark:bg-slate-800/80 backdrop-blur px-3 py-1 rounded-full shadow-sm">
+                        <span class="text-[10px] text-slate-500 dark:text-slate-300 font-medium"><i class="fa-solid fa-fingerprint ml-1.5 text-emerald-500"></i>برای ذکر گفتن لمس کنید</span>
+                    </div>
+                </div>
+
+                <div class="w-full max-w-[320px] bg-slate-100 dark:bg-slate-800/60 p-3 rounded-2xl border border-slate-200/60 dark:border-slate-700/60">
+                    <div class="flex justify-between items-center text-xs mb-1.5">
+                        <span class="text-slate-400">پیشرفت هدف روزانه</span>
+                        <span id="target-percent" class="font-bold text-emerald-600 dark:text-emerald-400">0%</span>
+                    </div>
+                    <div class="w-full bg-slate-200 dark:bg-slate-700/60 h-2 rounded-full overflow-hidden">
+                        <div id="target-progress-bar" class="bg-gradient-to-r from-emerald-500 to-teal-400 h-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-4 gap-2 px-2 py-3 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 shrink-0">
+                <button onclick="app.undoCount()" class="flex flex-col items-center justify-center py-1 text-slate-600 dark:text-slate-300 hover:text-emerald-600 transition">
+                    <i class="fa-solid fa-rotate-left text-sm mb-1"></i><span class="text-[10px]">کاهش</span>
+                </button>
+                <button onclick="app.toggleSound()" id="sound-btn" class="flex flex-col items-center justify-center py-1 text-emerald-600 transition">
+                    <i id="sound-icon" class="fa-solid fa-volume-high text-sm mb-1"></i><span class="text-[10px]">صدا</span>
+                </button>
+                <button onclick="app.toggleVibrate()" id="vibe-btn" class="flex flex-col items-center justify-center py-1 text-emerald-600 transition">
+                    <i id="vibe-icon" class="fa-solid fa-mobile-screen-button text-sm mb-1"></i><span class="text-[10px]">لرزش</span>
+                </button>
+                <button onclick="app.resetCounter()" class="flex flex-col items-center justify-center py-1 text-red-500 hover:text-red-600 transition">
+                    <i class="fa-solid fa-rotate text-sm mb-1"></i><span class="text-[10px]">صفر</span>
+                </button>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        const TASBIH_MODELS = {
+            shahmaghsoudi: { name: 'سبز شاه‌مقصودی', color: '#15803d', shadow: 'rgba(21, 128, 61, 0.4)' },
+            aqiq: { name: 'عقیق قرمز', color: '#b91c1c', shadow: 'rgba(185, 28, 28, 0.4)' },
+            firoozeh: { name: 'آبی فیروزه‌ای', color: '#0ea5e9', shadow: 'rgba(14, 165, 233, 0.4)' },
+            khaki: { name: 'خاکی چوبی', color: '#a16207', shadow: 'rgba(161, 98, 7, 0.4)' },
+            yellow: { name: 'زرد کهربایی', color: '#eab308', shadow: 'rgba(234, 179, 8, 0.4)' }
+        };
+
+        const DEFAULT_STATE = {
+            user: { theme: 'dark' },
+            activeDhikrId: 'd-1',
+            settings: {
+                tasbihModel: 'shahmaghsoudi',
+                soundEnabled: true,
+                vibrationEnabled: true
+            },
+            dhikrs: [
+                { id: 'd-1', name: 'صلوات بر محمد و آل محمد', target: 100, beadCount: 33, count: 0 },
+                { id: 'd-2', name: 'استغفار (استغفرالله ربی)', target: 100, beadCount: 33, count: 0 },
+                { id: 'd-3', name: 'سبحان‌الله و الحمدلله', target: 33, beadCount: 33, count: 0 },
+                { id: 'd-4', name: 'یا الله / یا رحمان', target: 100, beadCount: 33, count: 0 }
+            ]
+        };
+
+        class BaleZekrinoApp {
+            constructor() {
+                this.state = this.loadState();
+            }
+
+            loadState() {
+                const saved = localStorage.getItem('bale_zekrino_state');
+                return saved ? JSON.parse(saved) : DEFAULT_STATE;
+            }
+
+            saveState() {
+                localStorage.setItem('bale_zekrino_state', JSON.stringify(this.state));
+            }
+
+            init() {
+                this.applyTheme();
+                this.populateDropdowns();
+                this.updateUI();
+            }
+
+            applyTheme() {
+                const html = document.documentElement;
+                if (this.state.user.theme === 'dark') {
+                    html.classList.add('dark');
+                    document.getElementById('theme-icon').className = 'fa-solid fa-sun';
+                } else {
+                    html.classList.remove('dark');
+                    document.getElementById('theme-icon').className = 'fa-solid fa-moon';
+                }
+            }
+
+            toggleTheme() {
+                this.state.user.theme = this.state.user.theme === 'light' ? 'dark' : 'light';
+                this.saveState();
+                this.applyTheme();
+            }
+
+            populateDropdowns() {
+                const dhikrSelect = document.getElementById('dhikr-select');
+                dhikrSelect.innerHTML = this.state.dhikrs.map(d => `
+                    <option value="${d.id}" ${d.id === this.state.activeDhikrId ? 'selected' : ''}>${d.name} (${d.count})</option>
+                `).join('');
+
+                document.getElementById('model-select').value = this.state.settings.tasbihModel;
+            }
+
+            updateUI() {
+                const activeDhikr = this.state.dhikrs.find(d => d.id === this.state.activeDhikrId) || this.state.dhikrs[0];
+                const modelInfo = TASBIH_MODELS[this.state.settings.tasbihModel];
+                const roundNum = Math.floor(activeDhikr.count / activeDhikr.beadCount) + 1;
+                const activeBeadIndex = activeDhikr.count % activeDhikr.beadCount;
+
+                // Update text elements
+                document.getElementById('counter-display').innerText = activeDhikr.count;
+                document.getElementById('active-dhikr-name').innerText = activeDhikr.name;
+                document.getElementById('round-info').innerText = `دور ${roundNum} (دانه ${activeBeadIndex === 0 && activeDhikr.count > 0 ? activeDhikr.beadCount : activeBeadIndex} از ${activeDhikr.beadCount})`;
+
+                // Update progress bar
+                const percent = Math.min(100, Math.round((activeDhikr.count / activeDhikr.target) * 100));
+                document.getElementById('target-percent').innerText = `${percent}%`;
+                document.getElementById('target-progress-bar').style.width = `${percent}%`;
+
+                // Update Sound & Vibrate buttons state
+                document.getElementById('sound-btn').className = `flex flex-col items-center justify-center py-1 transition ${this.state.settings.soundEnabled ? 'text-emerald-600' : 'text-slate-400'}`;
+                document.getElementById('vibe-btn').className = `flex flex-col items-center justify-center py-1 transition ${this.state.settings.vibrationEnabled ? 'text-emerald-600' : 'text-slate-400'}`;
+
+                // Render physical beads arc
+                let beadsHTML = '';
+                for (let i = 0; i < 7; i++) {
+                    const isCenter = i === 3;
+                    const size = isCenter ? 'w-10 h-10 text-xs' : 'w-7 h-7 text-[10px]';
+                    const activeStyle = isCenter ? 'scale-110 ring-4 ring-emerald-500/40 z-10' : 'opacity-75 scale-90';
+                    beadsHTML += `
+                        <div class="${size} rounded-full flex items-center justify-center font-bold text-white bead-shadow transition-all duration-200 ${activeStyle}" style="background-color: ${modelInfo.color}; box-shadow: 0 4px 10px ${modelInfo.shadow};">
+                            📿
+                        </div>
+                    `;
+                }
+                document.getElementById('beads-container').innerHTML = beadsHTML;
+            }
+
+            incrementCount() {
+                const activeDhikr = this.state.dhikrs.find(d => d.id === this.state.activeDhikrId);
+                if (!activeDhikr) return;
+
+                activeDhikr.count++;
+                this.saveState();
+                this.updateUI();
+                this.populateDropdowns();
+
+                if (this.state.settings.vibrationEnabled && window.navigator && window.navigator.vibrate) {
+                    window.navigator.vibrate(30);
+                }
+                if (this.state.settings.soundEnabled) {
+                    this.playClickSound();
+                }
+
+                // Smooth scale animation on counter
+                const counter = document.getElementById('counter-display');
+                counter.classList.add('scale-110', 'text-emerald-500');
+                setTimeout(() => counter.classList.remove('scale-110', 'text-emerald-500'), 150);
+            }
+
+            undoCount() {
+                const activeDhikr = this.state.dhikrs.find(d => d.id === this.state.activeDhikrId);
+                if (activeDhikr && activeDhikr.count > 0) {
+                    activeDhikr.count--;
+                    this.saveState();
+                    this.updateUI();
+                    this.populateDropdowns();
+                }
+            }
+
+            resetCounter() {
+                if (confirm('آیا از صفر کردن شمارش این ذکر اطمینان دارید؟')) {
+                    const activeDhikr = this.state.dhikrs.find(d => d.id === this.state.activeDhikrId);
+                    if (activeDhikr) {
+                        activeDhikr.count = 0;
+                        this.saveState();
+                        this.updateUI();
+                        this.populateDropdowns();
+                    }
+                }
+            }
+
+            changeActiveDhikr(id) {
+                this.state.activeDhikrId = id;
+                this.saveState();
+                this.updateUI();
+            }
+
+            changeTasbihModel(modelKey) {
+                this.state.settings.tasbihModel = modelKey;
+                this.saveState();
+                this.updateUI();
+            }
+
+            toggleSound() {
+                this.state.settings.soundEnabled = !this.state.settings.soundEnabled;
+                this.saveState();
+                this.updateUI();
+            }
+
+            toggleVibrate() {
+                this.state.settings.vibrationEnabled = !this.state.settings.vibrationEnabled;
+                this.saveState();
+                this.updateUI();
+            }
+
+            playClickSound() {
+                try {
+                    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.05);
+                } catch (e) {}
+            }
+        }
+
+        const app = new BaleZekrinoApp();
+        window.addEventListener('DOMContentLoaded', () => app.init());
+    </script>
+</body>
+</html>
