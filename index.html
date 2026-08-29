@@ -27,9 +27,8 @@
         ::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, 0.4); border-radius: 4px; }
         .bead-shadow { box-shadow: inset -2px -2px 6px rgba(0,0,0,0.5), 2px 3px 8px rgba(0,0,0,0.3); }
         .glow-effect { box-shadow: 0 0 25px rgba(16, 185, 129, 0.25); }
-        .bead-item { transition: transform .18s ease, opacity .18s ease; opacity: 0.55; transform: scale(0.85); }
-        .bead-active { opacity: 1; transform: scale(1.35); animation: bead-pop .28s ease; z-index: 10; }
-        @keyframes bead-pop { 0% { transform: scale(0.9); } 55% { transform: scale(1.5); } 100% { transform: scale(1.35); } }
+        .bead-dot { transition: r .22s cubic-bezier(.34,1.4,.64,1), opacity .22s ease; opacity: 0.62; }
+        .bead-dot-active { opacity: 1; }
         #tasbih-pad.round-complete { animation: round-flash .5s ease; }
         @keyframes round-flash { 0%,100% { box-shadow: inset 0 0 0 0 transparent; } 40% { box-shadow: inset 0 0 40px 6px rgba(16,185,129,0.35); } }
     </style>
@@ -77,13 +76,10 @@
                 </div>
 
                 <div id="tasbih-pad" onpointerdown="app.incrementCount()" class="w-full max-w-[320px] h-52 rounded-3xl border-2 border-dashed border-emerald-500/30 dark:border-emerald-500/20 bg-gradient-to-b from-slate-50/50 to-slate-100/50 dark:from-slate-800/40 dark:to-slate-900/40 relative flex flex-col items-center justify-center cursor-pointer active:scale-95 transition shadow-inner overflow-hidden group">
-                    <svg class="absolute inset-0 w-full h-full pointer-events-none opacity-40" viewBox="0 0 300 200">
-                        <path d="M 20,110 Q 150,30 280,110" fill="none" stroke="currentColor" stroke-width="3" class="text-emerald-500" />
+                    <svg id="beads-svg" class="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 300 200" preserveAspectRatio="xMidYMid meet">
+                        <path d="M 20,110 Q 150,30 280,110" fill="none" stroke="currentColor" stroke-width="2" class="text-emerald-500/25" />
+                        <g id="beads-group"></g>
                     </svg>
-                    <div class="absolute inset-x-4 top-1/2 -translate-y-1/2 h-14 overflow-hidden">
-                        <div id="beads-container" class="flex items-center h-full" style="width: max-content; will-change: transform;">
-                        </div>
-                    </div>
                     <div class="absolute bottom-3 bg-white/80 dark:bg-slate-800/80 backdrop-blur px-3 py-1 rounded-full shadow-sm">
                         <span class="text-[10px] text-slate-500 dark:text-slate-300 font-medium"><i class="fa-solid fa-fingerprint ml-1.5 text-emerald-500"></i>برای ذکر گفتن لمس کنید</span>
                     </div>
@@ -232,37 +228,40 @@
                 document.getElementById('sound-btn').className = `flex flex-col items-center justify-center py-1 transition ${this.state.settings.soundEnabled ? 'text-emerald-600' : 'text-slate-400'}`;
                 document.getElementById('vibe-btn').className = `flex flex-col items-center justify-center py-1 transition ${this.state.settings.vibrationEnabled ? 'text-emerald-600' : 'text-slate-400'}`;
 
-                // Render a real, position-driven bead track (this is what makes beads actually move)
+                // Render beads directly on the arc (fixed necklace, moving highlight —
+                // see renderBeadsTrack for why this replaced the old scrolling strip)
                 this.renderBeadsTrack(activeDhikr, modelInfo, activeBeadIndex);
             }
 
-            // Draws `beadCount` beads in a horizontal strip and slides the strip with a CSS
-            // transition so the active bead animates into the center on every tap/undo.
-            // (The previous version always redrew the same static 7 beads, so nothing ever moved.)
+            // Draws a fixed set of beads laid out along the same curve as the decorative
+            // path, and moves the "active/highlighted" bead along that string as the count
+            // increases. This avoids the earlier approach (a horizontally scrolling strip
+            // clipped by overflow:hidden), which frequently left most of the string looking
+            // empty because most beads fell outside the visible clipping window.
             renderBeadsTrack(activeDhikr, modelInfo, activeBeadIndex) {
-                const container = document.getElementById('beads-container');
-                const wrapper = container.parentElement;
-                const beadSize = 30;
-                const gap = 12;
-                const step = beadSize + gap;
-                // cap rendered beads for performance on very large custom bead counts
-                const total = Math.min(activeDhikr.beadCount, 60);
-                const activeIndex = Math.min(activeBeadIndex, total - 1);
+                const group = document.getElementById('beads-group');
+                const BEAD_SLOTS = 21; // purely visual — represents the string, independent of exact beadCount
+                const beadCount = activeDhikr.beadCount;
 
-                let html = '';
-                for (let i = 0; i < total; i++) {
-                    const isActive = i === activeIndex;
-                    html += `<div class="bead-item shrink-0 rounded-full bead-shadow ${isActive ? 'bead-active' : ''}"
-                                  style="width:${beadSize}px;height:${beadSize}px;margin-inline-end:${gap}px;background-color:${modelInfo.color};box-shadow:0 4px 10px ${modelInfo.shadow};"></div>`;
+                // number shown in "دانه X از Y" — completing a round shows the last bead, not 0
+                const displayBeadNumber = (activeBeadIndex === 0 && activeDhikr.count > 0) ? beadCount : activeBeadIndex;
+                const proportion = displayBeadNumber / beadCount; // (0, 1]
+                const highlightIndex = Math.min(BEAD_SLOTS - 1, Math.floor(proportion * BEAD_SLOTS));
+
+                // quadratic bezier control points, matching the decorative path "M20,110 Q150,40 280,110"
+                const P0 = { x: 20, y: 110 }, P1 = { x: 150, y: 40 }, P2 = { x: 280, y: 110 };
+
+                let svg = '';
+                for (let i = 0; i < BEAD_SLOTS; i++) {
+                    const t = i / (BEAD_SLOTS - 1);
+                    const x = (1 - t) ** 2 * P0.x + 2 * (1 - t) * t * P1.x + t ** 2 * P2.x;
+                    const y = (1 - t) ** 2 * P0.y + 2 * (1 - t) * t * P1.y + t ** 2 * P2.y;
+                    const isActive = i === highlightIndex;
+                    const r = isActive ? 11 : 6.5;
+                    const glow = isActive ? `filter:drop-shadow(0 0 5px ${modelInfo.shadow});` : '';
+                    svg += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r}" fill="${modelInfo.color}" class="bead-dot ${isActive ? 'bead-dot-active' : ''}" style="${glow}"></circle>`;
                 }
-                container.innerHTML = html;
-
-                // Center the active bead inside the visible window
-                const wrapperWidth = wrapper.clientWidth || 280;
-                const beadCenter = activeIndex * step + beadSize / 2;
-                const offset = wrapperWidth / 2 - beadCenter;
-                container.style.transition = 'transform .28s cubic-bezier(.22,.9,.32,1)';
-                container.style.transform = `translateX(${offset}px)`;
+                group.innerHTML = svg;
             }
 
             incrementCount() {
