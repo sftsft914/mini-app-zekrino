@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>تسبیح دیجیتال هوشمند | ذکرینو (بله)</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#059669">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ذکرینو">
+    <link rel="apple-touch-icon" href="icon-192.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -61,6 +68,18 @@
                 </button>
             </div>
         </header>
+
+        <div class="flex items-center gap-2 px-4 pt-2.5 pb-1 shrink-0 overflow-x-auto">
+            <button onclick="app.openScreen('manage')" class="flex items-center gap-1.5 text-[11px] font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800/70 px-3 py-1.5 rounded-full whitespace-nowrap">
+                <i class="fa-solid fa-list-check text-emerald-600"></i> مدیریت اذکار
+            </button>
+            <button onclick="app.openScreen('history')" class="flex items-center gap-1.5 text-[11px] font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800/70 px-3 py-1.5 rounded-full whitespace-nowrap">
+                <i class="fa-solid fa-calendar-days text-emerald-600"></i> تاریخچه
+            </button>
+            <button onclick="app.openScreen('achievements')" class="flex items-center gap-1.5 text-[11px] font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800/70 px-3 py-1.5 rounded-full whitespace-nowrap">
+                <i class="fa-solid fa-trophy text-amber-500"></i> دستاوردها
+            </button>
+        </div>
 
         <main id="main-content" class="flex-1 overflow-y-auto relative pb-20 p-4 flex flex-col justify-between select-none">
             
@@ -146,6 +165,71 @@
             </div>
 
         </main>
+
+        <!-- ===================== MANAGE DHIKRS SCREEN ===================== -->
+        <div id="screen-manage" class="hidden absolute inset-0 bg-white dark:bg-slate-900 z-30 flex flex-col">
+            <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-800 shrink-0">
+                <button onclick="app.closeScreens()" class="w-8 h-8 flex items-center justify-center text-slate-500 dark:text-slate-300"><i class="fa-solid fa-arrow-right"></i></button>
+                <h2 class="font-bold text-sm text-slate-900 dark:text-white">مدیریت اذکار</h2>
+                <button onclick="app.openDhikrForm()" class="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center"><i class="fa-solid fa-plus text-xs"></i></button>
+            </div>
+            <div id="manage-list" class="flex-1 overflow-y-auto p-3 space-y-2"></div>
+        </div>
+
+        <!-- Add/Edit dhikr form (sits above the manage screen) -->
+        <div id="dhikr-form-sheet" class="hidden fixed inset-0 bg-black/50 z-40 flex items-end justify-center">
+            <div class="w-full max-w-md bg-white dark:bg-slate-900 rounded-t-3xl p-5 space-y-3">
+                <div class="w-10 h-1 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mb-1"></div>
+                <h3 id="dhikr-form-title" class="font-bold text-sm text-slate-900 dark:text-white">ذکر جدید</h3>
+                <input id="dhikr-form-name" type="text" placeholder="متن ذکر (مثلاً: سبحان‌الله و بحمده)" class="w-full text-sm bg-slate-100 dark:bg-slate-800 rounded-xl px-3 py-2.5 outline-none text-slate-800 dark:text-white">
+                <div class="flex gap-2">
+                    <div class="flex-1">
+                        <label class="text-[11px] text-slate-400 block mb-1">هدف روزانه</label>
+                        <input id="dhikr-form-target" type="number" min="1" placeholder="100" class="w-full text-sm bg-slate-100 dark:bg-slate-800 rounded-xl px-3 py-2.5 outline-none text-slate-800 dark:text-white">
+                    </div>
+                    <div class="flex-1">
+                        <label class="text-[11px] text-slate-400 block mb-1">تعداد دانه</label>
+                        <select id="dhikr-form-beads" class="w-full text-sm bg-slate-100 dark:bg-slate-800 rounded-xl px-3 py-2.5 outline-none text-slate-800 dark:text-white">
+                            <option value="11">۱۱</option>
+                            <option value="33" selected>۳۳</option>
+                            <option value="66">۶۶</option>
+                            <option value="99">۹۹</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button onclick="app.closeDhikrForm()" class="flex-1 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-sm font-semibold">انصراف</button>
+                    <button onclick="app.saveDhikrForm()" class="flex-1 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-semibold">ذخیره</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===================== HISTORY + CALENDAR SCREEN ===================== -->
+        <div id="screen-history" class="hidden absolute inset-0 bg-white dark:bg-slate-900 z-30 flex flex-col">
+            <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-800 shrink-0">
+                <button onclick="app.closeScreens()" class="w-8 h-8 flex items-center justify-center text-slate-500 dark:text-slate-300"><i class="fa-solid fa-arrow-right"></i></button>
+                <h2 class="font-bold text-sm text-slate-900 dark:text-white">تاریخچه فعالیت</h2>
+                <div class="w-8"></div>
+            </div>
+            <div class="flex-1 overflow-y-auto p-4">
+                <div id="calendar-month-label" class="text-center text-sm font-bold text-slate-700 dark:text-slate-200 mb-3"></div>
+                <div class="grid grid-cols-7 gap-1.5 text-center text-[10px] text-slate-400 mb-1.5">
+                    <span>ش</span><span>ی</span><span>د</span><span>س</span><span>چ</span><span>پ</span><span>ج</span>
+                </div>
+                <div id="calendar-grid" class="grid grid-cols-7 gap-1.5"></div>
+                <div id="day-detail" class="mt-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl p-3.5 text-xs text-slate-500 dark:text-slate-300 text-center">روی یک روز بزن تا جزئیاتش رو ببینی</div>
+            </div>
+        </div>
+
+        <!-- ===================== ACHIEVEMENTS SCREEN ===================== -->
+        <div id="screen-achievements" class="hidden absolute inset-0 bg-white dark:bg-slate-900 z-30 flex flex-col">
+            <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-800 shrink-0">
+                <button onclick="app.closeScreens()" class="w-8 h-8 flex items-center justify-center text-slate-500 dark:text-slate-300"><i class="fa-solid fa-arrow-right"></i></button>
+                <h2 class="font-bold text-sm text-slate-900 dark:text-white">دستاوردها</h2>
+                <div class="w-8"></div>
+            </div>
+            <div id="achievements-grid" class="flex-1 overflow-y-auto p-4 grid grid-cols-2 gap-3"></div>
+        </div>
     </div>
 
     <script>
@@ -158,11 +242,24 @@
         };
 
         const ACHIEVEMENTS = [
-            { id: 'a100', value: 100, label: '🥉 اولین ۱۰۰ ذکر' },
-            { id: 'a1000', value: 1000, label: '🥈 اولین ۱٬۰۰۰ ذکر' },
-            { id: 'a10000', value: 10000, label: '🥇 اولین ۱۰٬۰۰۰ ذکر' },
-            { id: 'a100000', value: 100000, label: '💎 ۱۰۰٬۰۰۰ ذکر' }
+            { id: 'a100', value: 100, type: 'count', label: '🥉 اولین ۱۰۰ ذکر' },
+            { id: 'a1000', value: 1000, type: 'count', label: '🥈 اولین ۱٬۰۰۰ ذکر' },
+            { id: 'a10000', value: 10000, type: 'count', label: '🥇 اولین ۱۰٬۰۰۰ ذکر' },
+            { id: 'a100000', value: 100000, type: 'count', label: '💎 ۱۰۰٬۰۰۰ ذکر' },
+            { id: 's7', value: 7, type: 'streak', label: '🔥 ۷ روز متوالی' },
+            { id: 's30', value: 30, type: 'streak', label: '🔥 ۳۰ روز متوالی' },
+            { id: 's100', value: 100, type: 'streak', label: '🔥 ۱۰۰ روز متوالی' }
         ];
+
+        // The classic "تسبیح فاطمه" combo said after each prayer: 33 + 33 + 34.
+        // This dhikr behaves like the others for progress/streaks/achievements
+        // (via its combined `count`), but cycles through 3 phases internally.
+        const DEFAULT_COMBO_DHIKR = {
+            id: 'combo-tasbih', name: 'ذکر بعد از نماز (تسبیح فاطمه)', isCombo: true,
+            phases: [{ label: 'سبحان‌الله', count: 33 }, { label: 'الحمدلله', count: 33 }, { label: 'الله‌اکبر', count: 34 }],
+            target: 100, beadCount: 33, count: 0, phaseIndex: 0, phaseCount: 0,
+            lifetimeCount: 0, history: {}, lastActiveDate: null
+        };
 
         const DEFAULT_STATE = {
             user: { theme: 'dark' },
@@ -178,13 +275,15 @@
                 { id: 'd-1', name: 'صلوات بر محمد و آل محمد', target: 100, beadCount: 33, count: 0, lifetimeCount: 0, history: {}, lastActiveDate: null },
                 { id: 'd-2', name: 'استغفار (استغفرالله ربی)', target: 100, beadCount: 33, count: 0, lifetimeCount: 0, history: {}, lastActiveDate: null },
                 { id: 'd-3', name: 'سبحان‌الله و الحمدلله', target: 33, beadCount: 33, count: 0, lifetimeCount: 0, history: {}, lastActiveDate: null },
-                { id: 'd-4', name: 'یا الله / یا رحمان', target: 100, beadCount: 33, count: 0, lifetimeCount: 0, history: {}, lastActiveDate: null }
+                { id: 'd-4', name: 'یا الله / یا رحمان', target: 100, beadCount: 33, count: 0, lifetimeCount: 0, history: {}, lastActiveDate: null },
+                { ...DEFAULT_COMBO_DHIKR }
             ]
         };
 
         class BaleZekrinoApp {
             constructor() {
                 this.state = this.loadState();
+                this.editingDhikrId = null;
             }
 
             loadState() {
@@ -195,9 +294,12 @@
                     // migrate older saved data that predates streaks/history/achievements
                     parsed.streak = parsed.streak || { current: 0, longest: 0, lastDate: null };
                     parsed.unlockedAchievements = parsed.unlockedAchievements || [];
-                    parsed.dhikrs = (parsed.dhikrs || []).map(d => ({
-                        lifetimeCount: 0, history: {}, lastActiveDate: null, ...d
-                    }));
+                    parsed.dhikrs = (parsed.dhikrs || []).map(d => (
+                        d.id === 'combo-tasbih' ? { ...DEFAULT_COMBO_DHIKR, ...d } : { lifetimeCount: 0, history: {}, lastActiveDate: null, ...d }
+                    ));
+                    if (!parsed.dhikrs.some(d => d.id === 'combo-tasbih')) {
+                        parsed.dhikrs.push({ ...DEFAULT_COMBO_DHIKR });
+                    }
                     return parsed;
                 } catch (e) {
                     console.warn('corrupted saved data, starting fresh:', e);
@@ -232,6 +334,13 @@
                 // helpful for debugging inside the real Bale app: open devtools/remote
                 // inspector and check this log to see what bridge object Bale exposes
                 console.log('[Zekrino] window.Bale bridge object:', window.Bale);
+
+                // Register the service worker for offline support + installability.
+                // Only meaningful when this file is opened as a standalone web app
+                // (e.g. on GitHub Pages) — harmless no-op if unsupported/blocked.
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.register('sw.js').catch(err => console.warn('SW registration failed:', err));
+                }
             }
 
             // ---- date helpers ----
@@ -256,6 +365,7 @@
                 d.lifetimeCount = (d.lifetimeCount || 0) + d.count;
                 const archivedDate = d.lastActiveDate;
                 d.count = 0;
+                if (d.isCombo) { d.phaseIndex = 0; d.phaseCount = 0; }
                 d.lastActiveDate = today;
                 return { archivedDate, reachedGoal };
             }
@@ -267,7 +377,7 @@
                     const res = this.rolloverIfNeeded(d);
                     if (res) { changed = true; if (res.reachedGoal) anyGoalDay = res.archivedDate; }
                 });
-                if (anyGoalDay) this.updateStreak(anyGoalDay);
+                if (anyGoalDay) { this.updateStreak(anyGoalDay); this.checkAchievements(); }
                 if (changed) this.saveState();
                 return changed;
             }
@@ -288,8 +398,11 @@
 
             checkAchievements() {
                 const total = this.state.dhikrs.reduce((sum, d) => sum + (d.lifetimeCount || 0) + (d.count || 0), 0);
+                const streak = this.state.streak.current || 0;
                 ACHIEVEMENTS.forEach(a => {
-                    if (total >= a.value && !this.state.unlockedAchievements.includes(a.id)) {
+                    if (this.state.unlockedAchievements.includes(a.id)) return;
+                    const hit = (a.type === 'streak') ? streak >= a.value : total >= a.value;
+                    if (hit) {
                         this.state.unlockedAchievements.push(a.id);
                         this.showToast(`دستاورد جدید: ${a.label}`);
                     }
@@ -363,17 +476,29 @@
             updateUI() {
                 const activeDhikr = this.state.dhikrs.find(d => d.id === this.state.activeDhikrId) || this.state.dhikrs[0];
                 const modelInfo = TASBIH_MODELS[this.state.settings.tasbihModel];
-                const beadCount = activeDhikr.beadCount;
-                // 0-based position within the current round; count=beadCount -> last bead (correct),
-                // count=beadCount+1 -> wraps cleanly to 0 (start of next round)
-                const posInRound = activeDhikr.count > 0 ? ((activeDhikr.count - 1) % beadCount + beadCount) % beadCount : 0;
-                const roundNum = activeDhikr.count > 0 ? Math.floor((activeDhikr.count - 1) / beadCount) + 1 : 1;
-                const beadNumberDisplay = activeDhikr.count > 0 ? posInRound + 1 : 0;
+
+                let displayName, beadCount, posInRound, roundText;
+                if (activeDhikr.isCombo) {
+                    const phase = activeDhikr.phases[activeDhikr.phaseIndex];
+                    displayName = phase.label;
+                    beadCount = phase.count;
+                    posInRound = activeDhikr.phaseCount % phase.count;
+                    roundText = `فاز ${activeDhikr.phaseIndex + 1} از ${activeDhikr.phases.length} (دانه ${activeDhikr.phaseCount} از ${phase.count})`;
+                } else {
+                    beadCount = activeDhikr.beadCount;
+                    // 0-based position within the current round; count=beadCount -> last bead (correct),
+                    // count=beadCount+1 -> wraps cleanly to 0 (start of next round)
+                    posInRound = activeDhikr.count > 0 ? ((activeDhikr.count - 1) % beadCount + beadCount) % beadCount : 0;
+                    const roundNum = activeDhikr.count > 0 ? Math.floor((activeDhikr.count - 1) / beadCount) + 1 : 1;
+                    const beadNumberDisplay = activeDhikr.count > 0 ? posInRound + 1 : 0;
+                    displayName = activeDhikr.name;
+                    roundText = `دور ${roundNum} (دانه ${beadNumberDisplay} از ${beadCount})`;
+                }
 
                 // Update text elements
                 document.getElementById('counter-display').innerText = activeDhikr.count;
-                document.getElementById('active-dhikr-name').innerText = activeDhikr.name;
-                document.getElementById('round-info').innerText = `دور ${roundNum} (دانه ${beadNumberDisplay} از ${beadCount})`;
+                document.getElementById('active-dhikr-name').innerText = displayName;
+                document.getElementById('round-info').innerText = roundText;
 
                 // Update progress bar — activeDhikr.count is now the *daily* counter
                 // (see rolloverIfNeeded), so this genuinely reflects today's progress
@@ -390,15 +515,14 @@
                 document.getElementById('sound-btn').className = `flex flex-col items-center justify-center py-1 transition ${this.state.settings.soundEnabled ? 'text-emerald-600' : 'text-slate-400'}`;
                 document.getElementById('vibe-btn').className = `flex flex-col items-center justify-center py-1 transition ${this.state.settings.vibrationEnabled ? 'text-emerald-600' : 'text-slate-400'}`;
 
-                this.renderBeadsRing(activeDhikr, modelInfo, posInRound);
+                this.renderBeadsRing(beadCount, modelInfo, posInRound);
             }
 
             // Draws a full circular necklace of beads and *rotates the whole ring* so the
             // active bead always lands under the fixed pointer notch at the top — this is
             // what gives the genuine "spinning tasbih" feeling, and there are no open/empty
             // ends since it's a closed loop.
-            renderBeadsRing(activeDhikr, modelInfo, posInRound) {
-                const beadCount = activeDhikr.beadCount;
+            renderBeadsRing(beadCount, modelInfo, posInRound) {
                 const N = Math.min(beadCount, 45); // cap purely for visual clarity on large custom counts
                 const ringIndex = Math.min(N - 1, Math.round((posInRound / beadCount) * N));
 
@@ -430,6 +554,23 @@
                 if (!activeDhikr) return;
 
                 activeDhikr.count++;
+                let phaseAdvanced = false;
+                if (activeDhikr.isCombo) {
+                    activeDhikr.phaseCount++;
+                    const phase = activeDhikr.phases[activeDhikr.phaseIndex];
+                    if (activeDhikr.phaseCount >= phase.count) {
+                        phaseAdvanced = true;
+                        if (activeDhikr.phaseIndex < activeDhikr.phases.length - 1) {
+                            activeDhikr.phaseIndex++;
+                            activeDhikr.phaseCount = 0;
+                            this.showToast(`ادامه با: ${activeDhikr.phases[activeDhikr.phaseIndex].label}`);
+                        } else {
+                            // full combo lap finished — wrap back to phase 1 for the next lap
+                            activeDhikr.phaseIndex = 0;
+                            activeDhikr.phaseCount = 0;
+                        }
+                    }
+                }
                 this.checkAchievements();
                 this.saveState();
                 this.updateUI();
@@ -453,8 +594,8 @@
                     this.showToast(`🎉 هدف امروز «${activeDhikr.name}» کامل شد`);
                 }
 
-                // subtle flash when a round completes
-                if (activeDhikr.count % activeDhikr.beadCount === 0) {
+                // subtle flash when a round (or, for the combo dhikr, a phase) completes
+                if (activeDhikr.isCombo ? phaseAdvanced : (activeDhikr.count % activeDhikr.beadCount === 0)) {
                     const pad = document.getElementById('tasbih-pad');
                     pad.classList.add('round-complete');
                     setTimeout(() => pad.classList.remove('round-complete'), 600);
@@ -491,6 +632,13 @@
                 const activeDhikr = this.state.dhikrs.find(d => d.id === this.state.activeDhikrId);
                 if (activeDhikr && activeDhikr.count > 0) {
                     activeDhikr.count--;
+                    if (activeDhikr.isCombo) {
+                        activeDhikr.phaseCount--;
+                        if (activeDhikr.phaseCount < 0) {
+                            activeDhikr.phaseIndex = (activeDhikr.phaseIndex - 1 + activeDhikr.phases.length) % activeDhikr.phases.length;
+                            activeDhikr.phaseCount = activeDhikr.phases[activeDhikr.phaseIndex].count - 1;
+                        }
+                    }
                     this.saveState();
                     this.updateUI();
                     this.populateDropdowns();
@@ -502,6 +650,7 @@
                     const activeDhikr = this.state.dhikrs.find(d => d.id === this.state.activeDhikrId);
                     if (activeDhikr) {
                         activeDhikr.count = 0;
+                        if (activeDhikr.isCombo) { activeDhikr.phaseIndex = 0; activeDhikr.phaseCount = 0; }
                         this.saveState();
                         this.updateUI();
                         this.populateDropdowns();
@@ -531,6 +680,174 @@
                 this.state.settings.vibrationEnabled = !this.state.settings.vibrationEnabled;
                 this.saveState();
                 this.updateUI();
+            }
+
+            // ---- screen navigation ----
+            openScreen(name) {
+                ['manage', 'history', 'achievements'].forEach(n => document.getElementById('screen-' + n).classList.add('hidden'));
+                document.getElementById('screen-' + name).classList.remove('hidden');
+                if (name === 'manage') this.renderManageList();
+                if (name === 'history') this.renderCalendar();
+                if (name === 'achievements') this.renderAchievementsGrid();
+            }
+            closeScreens() {
+                ['manage', 'history', 'achievements'].forEach(n => document.getElementById('screen-' + n).classList.add('hidden'));
+            }
+
+            // ---- dhikr management (add/edit/delete) ----
+            renderManageList() {
+                const list = document.getElementById('manage-list');
+                list.innerHTML = this.state.dhikrs.map(d => `
+                    <div class="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/60 rounded-2xl p-3">
+                        <div class="flex-1 min-w-0">
+                            <div class="text-sm font-bold text-slate-800 dark:text-white truncate">${d.name}</div>
+                            <div class="text-[11px] text-slate-400 mt-0.5">${d.isCombo ? 'هدف ترکیبی ۱۰۰ · ۳ فاز' : `هدف روزانه ${d.target} · دانه ${d.beadCount}`}</div>
+                        </div>
+                        ${d.isCombo ? '<span class="text-[10px] text-amber-500 font-bold px-2">ویژه</span>' : `
+                            <button onclick="app.openDhikrForm('${d.id}')" class="w-8 h-8 shrink-0 rounded-full bg-white dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-300"><i class="fa-solid fa-pen text-xs"></i></button>
+                            <button onclick="app.deleteDhikr('${d.id}')" class="w-8 h-8 shrink-0 rounded-full bg-white dark:bg-slate-700 flex items-center justify-center text-red-500"><i class="fa-solid fa-trash text-xs"></i></button>
+                        `}
+                    </div>
+                `).join('');
+            }
+
+            openDhikrForm(id) {
+                this.editingDhikrId = id || null;
+                const d = id ? this.state.dhikrs.find(x => x.id === id) : null;
+                document.getElementById('dhikr-form-title').innerText = d ? 'ویرایش ذکر' : 'ذکر جدید';
+                document.getElementById('dhikr-form-name').value = d ? d.name : '';
+                document.getElementById('dhikr-form-target').value = d ? d.target : 100;
+                document.getElementById('dhikr-form-beads').value = d ? d.beadCount : 33;
+                document.getElementById('dhikr-form-sheet').classList.remove('hidden');
+            }
+            closeDhikrForm() {
+                document.getElementById('dhikr-form-sheet').classList.add('hidden');
+            }
+            saveDhikrForm() {
+                const name = document.getElementById('dhikr-form-name').value.trim();
+                const target = parseInt(document.getElementById('dhikr-form-target').value, 10) || 100;
+                const beadCount = parseInt(document.getElementById('dhikr-form-beads').value, 10) || 33;
+                if (!name) { this.showToast('لطفاً متن ذکر را وارد کن'); return; }
+
+                if (this.editingDhikrId) {
+                    const d = this.state.dhikrs.find(x => x.id === this.editingDhikrId);
+                    if (d) { d.name = name; d.target = target; d.beadCount = beadCount; }
+                    this.showToast('ذکر ویرایش شد');
+                } else {
+                    this.state.dhikrs.push({
+                        id: 'd_' + Date.now(), name, target, beadCount, count: 0,
+                        lifetimeCount: 0, history: {}, lastActiveDate: this.todayKey()
+                    });
+                    this.showToast('ذکر جدید اضافه شد');
+                }
+                this.saveState();
+                this.populateDropdowns();
+                this.updateUI();
+                this.renderManageList();
+                this.closeDhikrForm();
+            }
+            deleteDhikr(id) {
+                if (this.state.dhikrs.filter(d => !d.isCombo).length <= 1) {
+                    this.showToast('باید حداقل یک ذکر باقی بماند');
+                    return;
+                }
+                if (!confirm('این ذکر حذف شود؟ تاریخچهٔ آن هم حذف می‌شود.')) return;
+                this.state.dhikrs = this.state.dhikrs.filter(d => d.id !== id);
+                if (this.state.activeDhikrId === id) this.state.activeDhikrId = this.state.dhikrs[0].id;
+                this.saveState();
+                this.populateDropdowns();
+                this.updateUI();
+                this.renderManageList();
+                this.showToast('ذکر حذف شد');
+            }
+
+            // ---- history + Jalali (Shamsi) calendar, using the browser's built-in
+            // Persian-calendar support so we don't have to hand-roll conversion math ----
+            getJalaliParts(date) {
+                const fmt = new Intl.DateTimeFormat('fa-IR-u-ca-persian-nu-latn', { year: 'numeric', month: 'numeric', day: 'numeric' });
+                return fmt.formatToParts(date).reduce((acc, p) => { if (p.type !== 'literal') acc[p.type] = +p.value; return acc; }, {});
+            }
+
+            getDayTotal(key) {
+                const today = this.todayKey();
+                return this.state.dhikrs.reduce((sum, d) => sum + (key === today ? (d.count || 0) : (d.history?.[key] || 0)), 0);
+            }
+
+            renderCalendar() {
+                const now = new Date();
+                let days = [], monthLabel = '';
+                try {
+                    const { year: jy, month: jm, day: jd } = this.getJalaliParts(now);
+                    const day1 = new Date(now);
+                    day1.setDate(day1.getDate() - (jd - 1));
+                    let cursor = new Date(day1);
+                    while (true) {
+                        const p = this.getJalaliParts(cursor);
+                        if (p.year !== jy || p.month !== jm) break;
+                        days.push({ date: new Date(cursor), label: p.day });
+                        cursor.setDate(cursor.getDate() + 1);
+                    }
+                    const monthNames = ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'];
+                    monthLabel = `${monthNames[jm - 1]} ${jy.toLocaleString('fa-IR')}`;
+                } catch (e) {
+                    // fallback if the device lacks Persian-calendar ICU data — a plain Gregorian grid
+                    const y = now.getFullYear(), m = now.getMonth();
+                    const count = new Date(y, m + 1, 0).getDate();
+                    for (let i = 0; i < count; i++) days.push({ date: new Date(y, m, i + 1), label: i + 1 });
+                    monthLabel = now.toLocaleDateString('fa-IR', { year: 'numeric', month: 'long' });
+                }
+
+                document.getElementById('calendar-month-label').innerText = monthLabel;
+
+                const firstWeekday = (days[0].date.getDay() + 1) % 7; // Sat-first week
+                let html = '';
+                for (let i = 0; i < firstWeekday; i++) html += `<div></div>`;
+
+                const todayKey = this.todayKey();
+                days.forEach(({ date, label }) => {
+                    const key = this.keyFromDate(date);
+                    const total = this.getDayTotal(key);
+                    let bg = 'bg-slate-100 dark:bg-slate-800/50 text-slate-400';
+                    if (total > 0 && total < 50) bg = 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300';
+                    else if (total >= 50 && total < 150) bg = 'bg-emerald-300 dark:bg-emerald-700/60 text-emerald-900 dark:text-emerald-100';
+                    else if (total >= 150) bg = 'bg-emerald-500 text-white';
+                    const ring = key === todayKey ? 'ring-2 ring-emerald-500' : '';
+                    html += `<button onclick="app.showDayDetail('${key}')" class="aspect-square rounded-xl flex items-center justify-center text-[11px] font-bold ${bg} ${ring}">${label.toLocaleString('fa-IR')}</button>`;
+                });
+
+                document.getElementById('calendar-grid').innerHTML = html;
+            }
+
+            showDayDetail(key) {
+                const today = this.todayKey();
+                const parts = this.state.dhikrs
+                    .map(d => ({ name: d.name, count: key === today ? d.count : (d.history?.[key] || 0) }))
+                    .filter(x => x.count > 0);
+                const total = parts.reduce((s, x) => s + x.count, 0);
+                const detail = document.getElementById('day-detail');
+                if (total === 0) {
+                    detail.innerHTML = `<div>در این روز فعالیتی ثبت نشده</div>`;
+                    return;
+                }
+                detail.innerHTML = `
+                    <div class="text-sm font-bold text-slate-700 dark:text-slate-200 mb-2">مجموع: ${total.toLocaleString('fa-IR')} ذکر</div>
+                    <div class="space-y-1">
+                        ${parts.map(p => `<div class="flex justify-between text-[11px]"><span>${p.name}</span><span class="font-bold">${p.count.toLocaleString('fa-IR')}</span></div>`).join('')}
+                    </div>`;
+            }
+
+            // ---- achievements screen ----
+            renderAchievementsGrid() {
+                const grid = document.getElementById('achievements-grid');
+                grid.innerHTML = ACHIEVEMENTS.map(a => {
+                    const unlocked = this.state.unlockedAchievements.includes(a.id);
+                    const [icon, ...rest] = a.label.split(' ');
+                    return `
+                        <div class="rounded-2xl p-4 text-center border ${unlocked ? 'bg-white dark:bg-slate-800 border-emerald-200 dark:border-emerald-800' : 'bg-slate-50 dark:bg-slate-800/40 border-slate-100 dark:border-slate-800 opacity-40'}">
+                            <div class="text-3xl mb-2">${icon}</div>
+                            <div class="text-[11px] font-bold text-slate-700 dark:text-slate-200">${rest.join(' ')}</div>
+                        </div>`;
+                }).join('');
             }
 
             playClickSound() {
