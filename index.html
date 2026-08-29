@@ -27,6 +27,11 @@
         ::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, 0.4); border-radius: 4px; }
         .bead-shadow { box-shadow: inset -2px -2px 6px rgba(0,0,0,0.5), 2px 3px 8px rgba(0,0,0,0.3); }
         .glow-effect { box-shadow: 0 0 25px rgba(16, 185, 129, 0.25); }
+        .bead-item { transition: transform .18s ease, opacity .18s ease; opacity: 0.55; transform: scale(0.85); }
+        .bead-active { opacity: 1; transform: scale(1.35); animation: bead-pop .28s ease; z-index: 10; }
+        @keyframes bead-pop { 0% { transform: scale(0.9); } 55% { transform: scale(1.5); } 100% { transform: scale(1.35); } }
+        #tasbih-pad.round-complete { animation: round-flash .5s ease; }
+        @keyframes round-flash { 0%,100% { box-shadow: inset 0 0 0 0 transparent; } 40% { box-shadow: inset 0 0 40px 6px rgba(16,185,129,0.35); } }
     </style>
 </head>
 <body class="h-full bg-slate-100 text-slate-800 dark:bg-slate-950 dark:text-slate-100 transition-colors duration-300 overflow-hidden">
@@ -71,12 +76,14 @@
                     <span id="round-info" class="text-xs text-slate-400 font-medium block">دور ۱ (دانه ۰ از ۳۳)</span>
                 </div>
 
-                <div onclick="app.incrementCount()" class="w-full max-w-[320px] h-52 rounded-3xl border-2 border-dashed border-emerald-500/30 dark:border-emerald-500/20 bg-gradient-to-b from-slate-50/50 to-slate-100/50 dark:from-slate-800/40 dark:to-slate-900/40 relative flex flex-col items-center justify-center cursor-pointer active:scale-98 transition shadow-inner overflow-hidden group">
+                <div id="tasbih-pad" onpointerdown="app.incrementCount()" class="w-full max-w-[320px] h-52 rounded-3xl border-2 border-dashed border-emerald-500/30 dark:border-emerald-500/20 bg-gradient-to-b from-slate-50/50 to-slate-100/50 dark:from-slate-800/40 dark:to-slate-900/40 relative flex flex-col items-center justify-center cursor-pointer active:scale-95 transition shadow-inner overflow-hidden group">
                     <svg class="absolute inset-0 w-full h-full pointer-events-none opacity-40" viewBox="0 0 300 200">
                         <path d="M 20,110 Q 150,30 280,110" fill="none" stroke="currentColor" stroke-width="3" class="text-emerald-500" />
                     </svg>
-                    <div id="beads-container" class="absolute inset-x-4 top-1/2 -translate-y-1/2 flex items-center justify-between px-2">
+                    <div class="absolute inset-x-4 top-1/2 -translate-y-1/2 h-14 overflow-hidden">
+                        <div id="beads-container" class="flex items-center h-full" style="width: max-content; will-change: transform;">
                         </div>
+                    </div>
                     <div class="absolute bottom-3 bg-white/80 dark:bg-slate-800/80 backdrop-blur px-3 py-1 rounded-full shadow-sm">
                         <span class="text-[10px] text-slate-500 dark:text-slate-300 font-medium"><i class="fa-solid fa-fingerprint ml-1.5 text-emerald-500"></i>برای ذکر گفتن لمس کنید</span>
                     </div>
@@ -153,7 +160,30 @@
             init() {
                 this.applyTheme();
                 this.populateDropdowns();
+                this.checkVibrationSupport();
                 this.updateUI();
+
+                // re-center the bead track if the layout size changes (rotation, resize)
+                let resizeTimer;
+                window.addEventListener('resize', () => {
+                    clearTimeout(resizeTimer);
+                    resizeTimer = setTimeout(() => this.updateUI(), 120);
+                });
+
+                // helpful for debugging inside the real Bale app: open devtools/remote
+                // inspector and check this log to see what bridge object Bale exposes
+                console.log('[Zekrino] window.Bale bridge object:', window.Bale);
+            }
+
+            checkVibrationSupport() {
+                const hasBaleBridge = !!(window.Bale && (window.Bale.vibrate || window.Bale.WebApp?.HapticFeedback));
+                const hasWebVibrate = !!(window.navigator && window.navigator.vibrate);
+                this.vibrationSupported = hasBaleBridge || hasWebVibrate;
+                const vibeBtn = document.getElementById('vibe-btn');
+                if (!this.vibrationSupported) {
+                    vibeBtn.classList.add('opacity-40');
+                    vibeBtn.title = 'لرزش در این مرورگر/دستگاه پشتیبانی نمی‌شود';
+                }
             }
 
             applyTheme() {
@@ -202,19 +232,37 @@
                 document.getElementById('sound-btn').className = `flex flex-col items-center justify-center py-1 transition ${this.state.settings.soundEnabled ? 'text-emerald-600' : 'text-slate-400'}`;
                 document.getElementById('vibe-btn').className = `flex flex-col items-center justify-center py-1 transition ${this.state.settings.vibrationEnabled ? 'text-emerald-600' : 'text-slate-400'}`;
 
-                // Render physical beads arc
-                let beadsHTML = '';
-                for (let i = 0; i < 7; i++) {
-                    const isCenter = i === 3;
-                    const size = isCenter ? 'w-10 h-10 text-xs' : 'w-7 h-7 text-[10px]';
-                    const activeStyle = isCenter ? 'scale-110 ring-4 ring-emerald-500/40 z-10' : 'opacity-75 scale-90';
-                    beadsHTML += `
-                        <div class="${size} rounded-full flex items-center justify-center font-bold text-white bead-shadow transition-all duration-200 ${activeStyle}" style="background-color: ${modelInfo.color}; box-shadow: 0 4px 10px ${modelInfo.shadow};">
-                            📿
-                        </div>
-                    `;
+                // Render a real, position-driven bead track (this is what makes beads actually move)
+                this.renderBeadsTrack(activeDhikr, modelInfo, activeBeadIndex);
+            }
+
+            // Draws `beadCount` beads in a horizontal strip and slides the strip with a CSS
+            // transition so the active bead animates into the center on every tap/undo.
+            // (The previous version always redrew the same static 7 beads, so nothing ever moved.)
+            renderBeadsTrack(activeDhikr, modelInfo, activeBeadIndex) {
+                const container = document.getElementById('beads-container');
+                const wrapper = container.parentElement;
+                const beadSize = 30;
+                const gap = 12;
+                const step = beadSize + gap;
+                // cap rendered beads for performance on very large custom bead counts
+                const total = Math.min(activeDhikr.beadCount, 60);
+                const activeIndex = Math.min(activeBeadIndex, total - 1);
+
+                let html = '';
+                for (let i = 0; i < total; i++) {
+                    const isActive = i === activeIndex;
+                    html += `<div class="bead-item shrink-0 rounded-full bead-shadow ${isActive ? 'bead-active' : ''}"
+                                  style="width:${beadSize}px;height:${beadSize}px;margin-inline-end:${gap}px;background-color:${modelInfo.color};box-shadow:0 4px 10px ${modelInfo.shadow};"></div>`;
                 }
-                document.getElementById('beads-container').innerHTML = beadsHTML;
+                container.innerHTML = html;
+
+                // Center the active bead inside the visible window
+                const wrapperWidth = wrapper.clientWidth || 280;
+                const beadCenter = activeIndex * step + beadSize / 2;
+                const offset = wrapperWidth / 2 - beadCenter;
+                container.style.transition = 'transform .28s cubic-bezier(.22,.9,.32,1)';
+                container.style.transform = `translateX(${offset}px)`;
             }
 
             incrementCount() {
@@ -226,8 +274,8 @@
                 this.updateUI();
                 this.populateDropdowns();
 
-                if (this.state.settings.vibrationEnabled && window.navigator && window.navigator.vibrate) {
-                    window.navigator.vibrate(30);
+                if (this.state.settings.vibrationEnabled) {
+                    this.hapticFeedback();
                 }
                 if (this.state.settings.soundEnabled) {
                     this.playClickSound();
@@ -237,6 +285,39 @@
                 const counter = document.getElementById('counter-display');
                 counter.classList.add('scale-110', 'text-emerald-500');
                 setTimeout(() => counter.classList.remove('scale-110', 'text-emerald-500'), 150);
+
+                // subtle flash when a round completes
+                if (activeDhikr.count % activeDhikr.beadCount === 0) {
+                    const pad = document.getElementById('tasbih-pad');
+                    pad.classList.add('round-complete');
+                    setTimeout(() => pad.classList.remove('round-complete'), 500);
+                }
+            }
+
+            // Tries, in order: Bale's mini-app haptic bridge (if this page is opened
+            // inside the actual Bale app), then the standard Web Vibration API,
+            // then fails silently. Standard navigator.vibrate() only works on
+            // Android Chrome/WebView with vibrate permission — it is NOT supported
+            // on iOS Safari/WebView at all (Apple has never implemented it), and it
+            // can also be silently blocked inside some in-app WebViews.
+            hapticFeedback() {
+                try {
+                    if (window.Bale && window.Bale.WebApp && window.Bale.WebApp.HapticFeedback
+                        && typeof window.Bale.WebApp.HapticFeedback.impactOccurred === 'function') {
+                        window.Bale.WebApp.HapticFeedback.impactOccurred('light');
+                        return true;
+                    }
+                    if (window.Bale && typeof window.Bale.vibrate === 'function') {
+                        window.Bale.vibrate(30);
+                        return true;
+                    }
+                    if (window.navigator && typeof window.navigator.vibrate === 'function') {
+                        return window.navigator.vibrate(30);
+                    }
+                } catch (e) {
+                    console.warn('haptic feedback failed:', e);
+                }
+                return false;
             }
 
             undoCount() {
