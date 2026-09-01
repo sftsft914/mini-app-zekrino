@@ -4,13 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>تسبیح دیجیتال هوشمند | ذکرینو (بله)</title>
-    <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#059669">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="ذکرینو">
-    <link rel="apple-touch-icon" href="icon-192.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -34,20 +32,33 @@
         ::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, 0.4); border-radius: 4px; }
         .bead-shadow { box-shadow: inset -2px -2px 6px rgba(0,0,0,0.5), 2px 3px 8px rgba(0,0,0,0.3); }
         .glow-effect { box-shadow: 0 0 25px rgba(16, 185, 129, 0.25); }
-        #beads-ring { transition: transform .38s cubic-bezier(.22,.85,.32,1.05); }
+        #tasbih-rotator { transition: transform .38s cubic-bezier(.22,.85,.32,1.05); }
         .bead-node { transition: r .25s ease; }
+        .bead-node.bead-flash { animation: bead-flash .5s ease; }
+        @keyframes bead-flash { 0% { filter: brightness(1.9); } 100% { filter: brightness(1); } }
         #tasbih-pad.round-complete { animation: round-flash .6s ease; }
         @keyframes round-flash { 0%,100% { box-shadow: inset 0 0 0 0 transparent; } 40% { box-shadow: inset 0 0 46px 8px rgba(16,185,129,0.4); } }
         .toast-pill { opacity: 0; transform: translateY(-12px) scale(.95); transition: opacity .25s ease, transform .25s ease; }
         .toast-pill.show { opacity: 1; transform: translateY(0) scale(1); }
         @keyframes counter-pulse { 0% { transform: scale(1); } 40% { transform: scale(1.14); } 100% { transform: scale(1); } }
         .counter-pulse { animation: counter-pulse .28s ease; }
+        /* subtle moving light reflection across the tasbih pad backdrop */
+        #pad-sheen { background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.35), transparent 45%); animation: sheen-move 7s ease-in-out infinite; }
+        @keyframes sheen-move { 0%,100% { background-position: 0% 0%; } 50% { background-position: 30% 20%; } }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: flex; flex-direction: column; }
+        .nav-btn.active-tab i, .nav-btn.active-tab span { color: #059669; }
+        .dark .nav-btn.active-tab i, .dark .nav-btn.active-tab span { color: #34d399; }
+        /* calm mode breathing */
+        @keyframes breathe { 0%,100% { transform: scale(1); opacity: 0.9; } 50% { transform: scale(1.06); opacity: 1; } }
+        .breathe { animation: breathe 4s ease-in-out infinite; }
+        #screen-calm { transition: opacity .3s ease; }
+        .calm-fade { transition: opacity 1.2s ease; }
     </style>
 </head>
 <body class="h-full bg-slate-100 text-slate-800 dark:bg-slate-950 dark:text-slate-100 transition-colors duration-300 overflow-hidden">
 
     <div id="toast-root" class="fixed top-3 inset-x-0 flex flex-col items-center gap-2 z-50 pointer-events-none px-4"></div>
-
 
     <div class="max-w-md mx-auto h-full flex flex-col bg-white dark:bg-slate-900 shadow-2xl relative overflow-hidden">
 
@@ -63,26 +74,17 @@
                 <div id="streak-badge" class="flex items-center gap-1 text-[11px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2.5 py-1.5 rounded-full">
                     <i class="fa-solid fa-fire text-[11px]"></i><span id="streak-text">۰</span>
                 </div>
+                <button onclick="app.openCalmMode()" title="حالت ذکر آرام" class="w-9 h-9 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                    <i class="fa-solid fa-spa"></i>
+                </button>
                 <button onclick="app.toggleTheme()" class="w-9 h-9 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
                     <i id="theme-icon" class="fa-solid fa-moon"></i>
                 </button>
             </div>
         </header>
 
-        <div class="flex items-center gap-2 px-4 pt-2.5 pb-1 shrink-0 overflow-x-auto">
-            <button onclick="app.openScreen('manage')" class="flex items-center gap-1.5 text-[11px] font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800/70 px-3 py-1.5 rounded-full whitespace-nowrap">
-                <i class="fa-solid fa-list-check text-emerald-600"></i> مدیریت اذکار
-            </button>
-            <button onclick="app.openScreen('history')" class="flex items-center gap-1.5 text-[11px] font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800/70 px-3 py-1.5 rounded-full whitespace-nowrap">
-                <i class="fa-solid fa-calendar-days text-emerald-600"></i> تاریخچه
-            </button>
-            <button onclick="app.openScreen('achievements')" class="flex items-center gap-1.5 text-[11px] font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800/70 px-3 py-1.5 rounded-full whitespace-nowrap">
-                <i class="fa-solid fa-trophy text-amber-500"></i> دستاوردها
-            </button>
-        </div>
-
-        <main id="main-content" class="flex-1 overflow-y-auto relative pb-20 p-4 flex flex-col justify-between select-none">
-            
+        <!-- ===================== TAB: HOME (تسبیح) ===================== -->
+        <div id="tab-home" class="tab-panel active flex-1 overflow-y-auto p-4">
             <div class="space-y-2 shrink-0">
                 <div class="flex items-center justify-between bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 gap-2">
                     <select id="dhikr-select" onchange="app.changeActiveDhikr(this.value)" class="bg-transparent text-xs font-bold text-slate-800 dark:text-white outline-none flex-1 cursor-pointer">
@@ -93,22 +95,28 @@
                         <option value="firoozeh">🔵 آبی فیروزه‌ای</option>
                         <option value="khaki">🟤 خاکی چوبی</option>
                         <option value="yellow">🟡 زرد کهربایی</option>
+                        <option value="custom">🎨 رنگ دلخواه</option>
                     </select>
+                    <input id="custom-color-input" type="color" value="#e11d48" oninput="app.setCustomColor(this.value)" class="hidden w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer bg-transparent">
                 </div>
+
+                <div id="favorites-strip" class="hidden flex items-center gap-1.5 overflow-x-auto pb-1"></div>
             </div>
 
-            <div class="flex flex-col items-center justify-center my-auto space-y-4">
+            <div class="flex flex-col items-center justify-center my-auto space-y-4 py-2">
 
-                <div id="tasbih-pad" onpointerdown="app.incrementCount()" class="relative w-full max-w-[300px] aspect-square mx-auto rounded-full cursor-pointer active:scale-[0.98] transition select-none">
-                    <div class="absolute inset-3 rounded-full bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-800/50 dark:to-slate-900/60 shadow-inner"></div>
-                    <svg id="beads-svg" class="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 200 200">
+                <div id="tasbih-pad" class="relative w-full max-w-[300px] aspect-square mx-auto rounded-full cursor-pointer active:scale-[0.98] transition select-none touch-none">
+                    <div class="absolute inset-3 rounded-full bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-800/50 dark:to-slate-900/60 shadow-inner overflow-hidden">
+                        <div id="pad-sheen" class="absolute inset-0"></div>
+                    </div>
+                    <svg id="beads-svg" class="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 -32 200 232">
                         <defs>
-                            <radialGradient id="beadGrad" cx="35%" cy="30%" r="75%">
+                            <radialGradient id="beadGrad" cx="32%" cy="26%" r="80%">
                                 <stop id="beadGradLight" offset="0%" stop-color="#8fd9bd" />
                                 <stop id="beadGradDark" offset="100%" stop-color="#0f4633" />
                             </radialGradient>
-                            <radialGradient id="beadGradGold" cx="35%" cy="30%" r="75%">
-                                <stop offset="0%" stop-color="#f6e3a1" />
+                            <radialGradient id="beadGradGold" cx="32%" cy="26%" r="80%">
+                                <stop offset="0%" stop-color="#f8ecc0" />
                                 <stop offset="100%" stop-color="#8a6a1f" />
                             </radialGradient>
                             <filter id="beadGlow" x="-80%" y="-80%" width="260%" height="260%">
@@ -116,12 +124,19 @@
                                 <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
                             </filter>
                         </defs>
-                        <circle cx="100" cy="100" r="82" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2 6" class="text-emerald-500/25" />
-                        <polygon points="100,10 94,21 106,21" class="text-emerald-500" fill="currentColor" />
-                        <g id="beads-ring"></g>
+                        <circle cx="100" cy="106" r="68" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2 6" class="text-emerald-500/25" />
+                        <g id="tasbih-rotator">
+                            <g id="beads-ring"></g>
+                            <!-- imam bead + tassel rotate together with the loop, like actually spinning a real tasbih in hand -->
+                            <g id="imam-tassel" pointer-events="none">
+                                <g id="tassel-strands"></g>
+                                <ellipse cx="100" cy="23" rx="6.5" ry="3.2" fill="url(#beadGradGold)" stroke="#fff" stroke-width="0.6" stroke-opacity="0.4" />
+                                <circle cx="100" cy="38" r="14" fill="url(#beadGradGold)" stroke="#fff" stroke-width="1" stroke-opacity="0.55" />
+                            </g>
+                        </g>
                     </svg>
 
-                    <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none px-8 text-center">
+                    <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none px-8 text-center" style="transform: translateY(9%)">
                         <span id="active-dhikr-name" class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-white/85 dark:bg-slate-900/70 backdrop-blur px-3 py-1 rounded-full mb-1">ذکر صلوات</span>
                         <div id="counter-display" class="text-6xl font-black text-slate-900 dark:text-white leading-none">0</div>
                         <span id="round-info" class="text-[11px] text-slate-400 font-medium mt-1.5 bg-white/70 dark:bg-slate-900/60 backdrop-blur px-2.5 py-0.5 rounded-full">دور ۱ (دانه ۰ از ۳۳)</span>
@@ -129,7 +144,7 @@
 
                     <div class="absolute -bottom-1 inset-x-0 flex justify-center pointer-events-none">
                         <div class="bg-white/80 dark:bg-slate-800/80 backdrop-blur px-3 py-1 rounded-full shadow-sm">
-                            <span class="text-[10px] text-slate-500 dark:text-slate-300 font-medium"><i class="fa-solid fa-fingerprint ml-1.5 text-emerald-500"></i>برای ذکر گفتن لمس کنید</span>
+                            <span class="text-[10px] text-slate-500 dark:text-slate-300 font-medium"><i class="fa-solid fa-hand-pointer ml-1.5 text-emerald-500"></i>لمس کن یا انگشتت رو بکش</span>
                         </div>
                     </div>
                 </div>
@@ -163,20 +178,24 @@
                     <i class="fa-solid fa-rotate text-sm mb-1"></i><span class="text-[10px]">صفر</span>
                 </button>
             </div>
-
-        </main>
-
-        <!-- ===================== MANAGE DHIKRS SCREEN ===================== -->
-        <div id="screen-manage" class="hidden absolute inset-0 bg-white dark:bg-slate-900 z-30 flex flex-col">
-            <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-800 shrink-0">
-                <button onclick="app.closeScreens()" class="w-8 h-8 flex items-center justify-center text-slate-500 dark:text-slate-300"><i class="fa-solid fa-arrow-right"></i></button>
-                <h2 class="font-bold text-sm text-slate-900 dark:text-white">مدیریت اذکار</h2>
-                <button onclick="app.openDhikrForm()" class="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center"><i class="fa-solid fa-plus text-xs"></i></button>
-            </div>
-            <div id="manage-list" class="flex-1 overflow-y-auto p-3 space-y-2"></div>
         </div>
 
-        <!-- Add/Edit dhikr form (sits above the manage screen) -->
+        <!-- ===================== TAB: DHIKRS (مدیریت + کتابخانه) ===================== -->
+        <div id="tab-dhikrs" class="tab-panel flex-1 overflow-y-auto">
+            <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-800 shrink-0 sticky top-0 bg-white dark:bg-slate-900 z-10">
+                <h2 class="font-bold text-sm text-slate-900 dark:text-white">اذکار من</h2>
+                <button onclick="app.openDhikrForm()" class="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center"><i class="fa-solid fa-plus text-xs"></i></button>
+            </div>
+            <div id="manage-list" class="p-3 space-y-2"></div>
+
+            <div class="px-4 pt-2 pb-1">
+                <div class="text-[11px] font-bold text-slate-400">📚 کتابخانهٔ اذکار پیشنهادی</div>
+                <div class="text-[10.5px] text-slate-400 mt-0.5">با یک لمس به لیست خودت اضافه‌شون کن</div>
+            </div>
+            <div id="library-list" class="p-3 pt-1 space-y-3"></div>
+        </div>
+
+        <!-- Add/Edit dhikr form (bottom sheet, works from any tab) -->
         <div id="dhikr-form-sheet" class="hidden fixed inset-0 bg-black/50 z-40 flex items-end justify-center">
             <div class="w-full max-w-md bg-white dark:bg-slate-900 rounded-t-3xl p-5 space-y-3">
                 <div class="w-10 h-1 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mb-1"></div>
@@ -204,14 +223,54 @@
             </div>
         </div>
 
-        <!-- ===================== HISTORY + CALENDAR SCREEN ===================== -->
-        <div id="screen-history" class="hidden absolute inset-0 bg-white dark:bg-slate-900 z-30 flex flex-col">
-            <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-800 shrink-0">
-                <button onclick="app.closeScreens()" class="w-8 h-8 flex items-center justify-center text-slate-500 dark:text-slate-300"><i class="fa-solid fa-arrow-right"></i></button>
-                <h2 class="font-bold text-sm text-slate-900 dark:text-white">تاریخچه فعالیت</h2>
-                <div class="w-8"></div>
+        <!-- ===================== TAB: STATS (آمار + تاریخچه) ===================== -->
+        <div id="tab-stats" class="tab-panel flex-1 overflow-y-auto">
+            <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-800 shrink-0 sticky top-0 bg-white dark:bg-slate-900 z-10">
+                <h2 class="font-bold text-sm text-slate-900 dark:text-white">آمار من</h2>
+                <div class="flex gap-1.5">
+                    <button id="stats-subtab-overview-btn" onclick="app.switchStatsSubtab('overview')" class="text-[11px] font-bold px-3 py-1.5 rounded-full">نمای کلی</button>
+                    <button id="stats-subtab-calendar-btn" onclick="app.switchStatsSubtab('calendar')" class="text-[11px] font-bold px-3 py-1.5 rounded-full">تقویم</button>
+                </div>
             </div>
-            <div class="flex-1 overflow-y-auto p-4">
+
+            <div id="stats-subtab-overview" class="p-4 space-y-4">
+                <div class="grid grid-cols-2 gap-2.5">
+                    <div class="bg-slate-50 dark:bg-slate-800/60 rounded-2xl p-3.5">
+                        <div class="text-[10.5px] text-slate-400 mb-1">امروز</div>
+                        <div id="stat-today" class="text-xl font-black text-slate-800 dark:text-white">۰</div>
+                    </div>
+                    <div class="bg-slate-50 dark:bg-slate-800/60 rounded-2xl p-3.5">
+                        <div class="text-[10.5px] text-slate-400 mb-1">این هفته</div>
+                        <div id="stat-week" class="text-xl font-black text-slate-800 dark:text-white">۰</div>
+                    </div>
+                    <div class="bg-slate-50 dark:bg-slate-800/60 rounded-2xl p-3.5">
+                        <div class="text-[10.5px] text-slate-400 mb-1">این ماه</div>
+                        <div id="stat-month" class="text-xl font-black text-slate-800 dark:text-white">۰</div>
+                    </div>
+                    <div class="bg-emerald-600 rounded-2xl p-3.5">
+                        <div class="text-[10.5px] text-emerald-100 mb-1">مجموع کل</div>
+                        <div id="stat-alltime" class="text-xl font-black text-white">۰</div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-50 dark:bg-slate-800/60 rounded-2xl p-4">
+                    <div class="text-xs font-bold text-slate-600 dark:text-slate-300 mb-3">📈 هفت روز اخیر</div>
+                    <div id="week-chart" class="flex items-end gap-1.5"></div>
+                </div>
+
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between bg-slate-50 dark:bg-slate-800/60 rounded-2xl px-4 py-3 text-xs">
+                        <span class="text-slate-400">🏆 پرکارترین روز شما</span>
+                        <span id="stat-best-day" class="font-bold text-slate-700 dark:text-slate-200">—</span>
+                    </div>
+                    <div class="flex items-center justify-between bg-slate-50 dark:bg-slate-800/60 rounded-2xl px-4 py-3 text-xs">
+                        <span class="text-slate-400">میانگین روزانه</span>
+                        <span id="stat-avg" class="font-bold text-slate-700 dark:text-slate-200">۰</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="stats-subtab-calendar" class="hidden p-4">
                 <div id="calendar-month-label" class="text-center text-sm font-bold text-slate-700 dark:text-slate-200 mb-3"></div>
                 <div class="grid grid-cols-7 gap-1.5 text-center text-[10px] text-slate-400 mb-1.5">
                     <span>ش</span><span>ی</span><span>د</span><span>س</span><span>چ</span><span>پ</span><span>ج</span>
@@ -221,14 +280,74 @@
             </div>
         </div>
 
-        <!-- ===================== ACHIEVEMENTS SCREEN ===================== -->
-        <div id="screen-achievements" class="hidden absolute inset-0 bg-white dark:bg-slate-900 z-30 flex flex-col">
-            <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-800 shrink-0">
-                <button onclick="app.closeScreens()" class="w-8 h-8 flex items-center justify-center text-slate-500 dark:text-slate-300"><i class="fa-solid fa-arrow-right"></i></button>
+        <!-- ===================== TAB: ACHIEVEMENTS ===================== -->
+        <div id="tab-achievements" class="tab-panel flex-1 overflow-y-auto">
+            <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-800 shrink-0 sticky top-0 bg-white dark:bg-slate-900 z-10">
                 <h2 class="font-bold text-sm text-slate-900 dark:text-white">دستاوردها</h2>
                 <div class="w-8"></div>
             </div>
-            <div id="achievements-grid" class="flex-1 overflow-y-auto p-4 grid grid-cols-2 gap-3"></div>
+            <div id="achievements-grid" class="p-4 grid grid-cols-2 gap-3"></div>
+        </div>
+
+        <!-- ===================== TAB: SETTINGS (شخصی‌سازی) ===================== -->
+        <div id="tab-settings" class="tab-panel flex-1 overflow-y-auto">
+            <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-800 shrink-0 sticky top-0 bg-white dark:bg-slate-900 z-10">
+                <h2 class="font-bold text-sm text-slate-900 dark:text-white">تنظیمات و شخصی‌سازی</h2>
+                <div class="w-8"></div>
+            </div>
+            <div class="p-4 space-y-5">
+                <div>
+                    <div class="text-[11px] font-bold text-slate-400 mb-2">شدت لرزش</div>
+                    <div id="vibration-strength-group" class="grid grid-cols-3 gap-2"></div>
+                </div>
+                <div>
+                    <div class="text-[11px] font-bold text-slate-400 mb-2">نوع صدای شمارش</div>
+                    <div id="sound-style-group" class="grid grid-cols-3 gap-2"></div>
+                </div>
+                <div>
+                    <div class="text-[11px] font-bold text-slate-400 mb-2">رنگ پیش‌فرض تسبیح برای اذکار جدید</div>
+                    <div id="default-color-group" class="flex flex-wrap gap-2"></div>
+                </div>
+                <div class="flex items-center justify-between bg-slate-50 dark:bg-slate-800/60 rounded-2xl px-4 py-3">
+                    <span class="text-xs font-semibold text-slate-700 dark:text-slate-200">نمایش «دور / دانه»</span>
+                    <button id="toggle-round-info" onclick="app.toggleRoundInfoVisibility()" class="w-11 h-6 rounded-full bg-emerald-600 relative transition">
+                        <span class="absolute top-0.5 right-0.5 w-5 h-5 bg-white rounded-full transition-transform"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===================== BOTTOM NAV ===================== -->
+        <div class="grid grid-cols-5 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0 pb-[env(safe-area-inset-bottom)]">
+            <button data-tab="home" onclick="app.switchTab('home')" class="nav-btn active-tab flex flex-col items-center justify-center py-2.5 gap-1">
+                <i class="fa-solid fa-house text-slate-400"></i><span class="text-[10px] font-semibold text-slate-400">خانه</span>
+            </button>
+            <button data-tab="dhikrs" onclick="app.switchTab('dhikrs')" class="nav-btn flex flex-col items-center justify-center py-2.5 gap-1">
+                <i class="fa-solid fa-layer-group text-slate-400"></i><span class="text-[10px] font-semibold text-slate-400">اذکار</span>
+            </button>
+            <button data-tab="stats" onclick="app.switchTab('stats')" class="nav-btn flex flex-col items-center justify-center py-2.5 gap-1">
+                <i class="fa-solid fa-chart-simple text-slate-400"></i><span class="text-[10px] font-semibold text-slate-400">آمار</span>
+            </button>
+            <button data-tab="achievements" onclick="app.switchTab('achievements')" class="nav-btn flex flex-col items-center justify-center py-2.5 gap-1">
+                <i class="fa-solid fa-trophy text-slate-400"></i><span class="text-[10px] font-semibold text-slate-400">دستاورد</span>
+            </button>
+            <button data-tab="settings" onclick="app.switchTab('settings')" class="nav-btn flex flex-col items-center justify-center py-2.5 gap-1">
+                <i class="fa-solid fa-sliders text-slate-400"></i><span class="text-[10px] font-semibold text-slate-400">تنظیمات</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- ===================== CALM DHIKR MODE ===================== -->
+    <div id="screen-calm" class="hidden fixed inset-0 z-[60] bg-[#060b09] text-emerald-50 flex-col items-center justify-center select-none touch-none">
+        <button onclick="app.closeCalmMode()" class="absolute top-5 left-5 w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-white/70">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+        <div id="calm-content" class="calm-fade flex flex-col items-center gap-3 px-8 text-center">
+            <div class="text-3xl breathe">🌙</div>
+            <div id="calm-dhikr-name" class="text-sm text-emerald-300/80 font-medium">صلوات</div>
+            <div id="calm-counter" class="text-7xl font-black text-white breathe">۰</div>
+            <div id="calm-target" class="text-xs text-emerald-200/50">از ۱۰۰</div>
+            <div class="text-[11px] text-emerald-200/40 mt-4 tracking-wide">آرام نفس بکش، و ذکر بگو…</div>
         </div>
     </div>
 
@@ -252,14 +371,30 @@
         ];
 
         // The classic "تسبیح فاطمه" combo said after each prayer: 33 + 33 + 34.
-        // This dhikr behaves like the others for progress/streaks/achievements
-        // (via its combined `count`), but cycles through 3 phases internally.
         const DEFAULT_COMBO_DHIKR = {
             id: 'combo-tasbih', name: 'ذکر بعد از نماز (تسبیح فاطمه)', isCombo: true,
             phases: [{ label: 'سبحان‌الله', count: 33 }, { label: 'الحمدلله', count: 33 }, { label: 'الله‌اکبر', count: 34 }],
-            target: 100, beadCount: 33, count: 0, phaseIndex: 0, phaseCount: 0,
+            target: 100, beadCount: 33, count: 0, phaseIndex: 0, phaseCount: 0, beadStyle: 'khaki', favorite: false,
             lifetimeCount: 0, history: {}, lastActiveDate: null
         };
+
+        // Categorized presets for the "کتابخانهٔ اذکار پیشنهادی" — one tap adds a real
+        // configured dhikr (name/target/beadCount/color) instead of a bare label.
+        const DHIKR_LIBRARY = [
+            { group: '🕌 بعد از نماز', items: [
+                { name: 'سبحان‌الله', target: 33, beadCount: 33, beadStyle: 'firoozeh' },
+                { name: 'الحمدلله', target: 33, beadCount: 33, beadStyle: 'yellow' },
+                { name: 'الله‌اکبر', target: 34, beadCount: 34, beadStyle: 'khaki' }
+            ]},
+            { group: '☀️ صبح', items: [
+                { name: 'استغفرالله ربی و اتوب الیه', target: 100, beadCount: 33, beadStyle: 'aqiq' },
+                { name: 'یا حی یا قیوم', target: 100, beadCount: 33, beadStyle: 'firoozeh' }
+            ]},
+            { group: '🌙 شب', items: [
+                { name: 'لا اله الا الله', target: 100, beadCount: 33, beadStyle: 'shahmaghsoudi' },
+                { name: 'ذکر خواب (استغفرالله)', target: 33, beadCount: 33, beadStyle: 'khaki' }
+            ]}
+        ];
 
         const DEFAULT_STATE = {
             user: { theme: 'dark' },
@@ -267,35 +402,50 @@
             settings: {
                 tasbihModel: 'shahmaghsoudi',
                 soundEnabled: true,
-                vibrationEnabled: true
+                vibrationEnabled: true,
+                vibrationStrength: 'medium',
+                soundStyle: 'soft',
+                defaultBeadStyle: 'shahmaghsoudi',
+                showRoundInfo: true
             },
             streak: { current: 0, longest: 0, lastDate: null },
             unlockedAchievements: [],
             dhikrs: [
-                { id: 'd-1', name: 'صلوات بر محمد و آل محمد', target: 100, beadCount: 33, count: 0, lifetimeCount: 0, history: {}, lastActiveDate: null },
-                { id: 'd-2', name: 'استغفار (استغفرالله ربی)', target: 100, beadCount: 33, count: 0, lifetimeCount: 0, history: {}, lastActiveDate: null },
-                { id: 'd-3', name: 'سبحان‌الله و الحمدلله', target: 33, beadCount: 33, count: 0, lifetimeCount: 0, history: {}, lastActiveDate: null },
-                { id: 'd-4', name: 'یا الله / یا رحمان', target: 100, beadCount: 33, count: 0, lifetimeCount: 0, history: {}, lastActiveDate: null },
+                { id: 'd-1', name: 'صلوات بر محمد و آل محمد', target: 100, beadCount: 33, count: 0, lifetimeCount: 0, history: {}, lastActiveDate: null, beadStyle: 'shahmaghsoudi', favorite: true },
+                { id: 'd-2', name: 'استغفار (استغفرالله ربی)', target: 100, beadCount: 33, count: 0, lifetimeCount: 0, history: {}, lastActiveDate: null, beadStyle: 'aqiq', favorite: true },
+                { id: 'd-3', name: 'سبحان‌الله و الحمدلله', target: 33, beadCount: 33, count: 0, lifetimeCount: 0, history: {}, lastActiveDate: null, beadStyle: 'firoozeh', favorite: false },
+                { id: 'd-4', name: 'یا الله / یا رحمان', target: 100, beadCount: 33, count: 0, lifetimeCount: 0, history: {}, lastActiveDate: null, beadStyle: 'yellow', favorite: false },
                 { ...DEFAULT_COMBO_DHIKR }
             ]
         };
+
+        const emptyAppData = () => JSON.parse(JSON.stringify(DEFAULT_STATE));
 
         class BaleZekrinoApp {
             constructor() {
                 this.state = this.loadState();
                 this.editingDhikrId = null;
+                this.statsSubtab = 'overview';
+                this.calmDimTimer = null;
+                this.dragState = null;
             }
 
             loadState() {
                 const saved = localStorage.getItem('bale_zekrino_state');
-                if (!saved) return JSON.parse(JSON.stringify(DEFAULT_STATE));
+                if (!saved) return emptyAppData();
                 try {
                     const parsed = JSON.parse(saved);
-                    // migrate older saved data that predates streaks/history/achievements
                     parsed.streak = parsed.streak || { current: 0, longest: 0, lastDate: null };
                     parsed.unlockedAchievements = parsed.unlockedAchievements || [];
+                    parsed.settings = {
+                        tasbihModel: 'shahmaghsoudi', vibrationStrength: 'medium', soundStyle: 'soft',
+                        defaultBeadStyle: 'shahmaghsoudi', showRoundInfo: true, ...(parsed.settings || {})
+                    };
                     parsed.dhikrs = (parsed.dhikrs || []).map(d => (
-                        d.id === 'combo-tasbih' ? { ...DEFAULT_COMBO_DHIKR, ...d } : { lifetimeCount: 0, history: {}, lastActiveDate: null, ...d }
+                        d.id === 'combo-tasbih' ? { ...DEFAULT_COMBO_DHIKR, ...d } : {
+                            lifetimeCount: 0, history: {}, lastActiveDate: null, favorite: false,
+                            beadStyle: parsed.settings.tasbihModel || 'shahmaghsoudi', ...d
+                        }
                     ));
                     if (!parsed.dhikrs.some(d => d.id === 'combo-tasbih')) {
                         parsed.dhikrs.push({ ...DEFAULT_COMBO_DHIKR });
@@ -303,7 +453,7 @@
                     return parsed;
                 } catch (e) {
                     console.warn('corrupted saved data, starting fresh:', e);
-                    return JSON.parse(JSON.stringify(DEFAULT_STATE));
+                    return emptyAppData();
                 }
             }
 
@@ -315,32 +465,74 @@
                 this.applyTheme();
                 this.rolloverAll();
                 this.populateDropdowns();
+                this.syncModelPicker();
                 this.checkVibrationSupport();
+                this.renderTassel();
+                this.renderFavoritesStrip();
+                this.setupCountingGestures();
                 this.updateUI();
 
-                // re-center the bead ring if the layout size changes (rotation, resize)
+                // Add PWA-only <link> tags (manifest, touch-icon) only when this is the
+                // real deployed page — skips them entirely inside preview sandboxes/iframes
+                // where manifest.json/icon-192.png won't exist and could confuse the tool.
+                if (window.self === window.top) {
+                    const manifestLink = document.createElement('link');
+                    manifestLink.rel = 'manifest';
+                    manifestLink.href = 'manifest.json';
+                    document.head.appendChild(manifestLink);
+
+                    const touchIcon = document.createElement('link');
+                    touchIcon.rel = 'apple-touch-icon';
+                    touchIcon.href = 'icon-192.png';
+                    document.head.appendChild(touchIcon);
+                }
+
                 let resizeTimer;
                 window.addEventListener('resize', () => {
                     clearTimeout(resizeTimer);
                     resizeTimer = setTimeout(() => this.updateUI(), 120);
                 });
 
-                // if the mini-app stays open across midnight, catch the date change
                 setInterval(() => {
                     const changed = this.rolloverAll();
                     if (changed) { this.populateDropdowns(); this.updateUI(); }
                 }, 5 * 60 * 1000);
 
-                // helpful for debugging inside the real Bale app: open devtools/remote
-                // inspector and check this log to see what bridge object Bale exposes
                 console.log('[Zekrino] window.Bale bridge object:', window.Bale);
 
-                // Register the service worker for offline support + installability.
-                // Only meaningful when this file is opened as a standalone web app
-                // (e.g. on GitHub Pages) — harmless no-op if unsupported/blocked.
-                if ('serviceWorker' in navigator) {
+                // Service workers should never be registered inside a third-party iframe
+                // (many browsers block it anyway, and some embedded preview tools break
+                // entirely if we try). Only register when this page is the real top-level
+                // document — i.e. actually deployed and opened directly, not previewed
+                // inside another site's sandboxed frame.
+                if ('serviceWorker' in navigator && window.self === window.top) {
                     navigator.serviceWorker.register('sw.js').catch(err => console.warn('SW registration failed:', err));
                 }
+            }
+
+            renderTassel() {
+                const strandCount = 22;
+                const startX = 100, startY = 20;
+                const colors = ['#611a29', '#7a2035', '#8b2942', '#9c3350', '#6b1b2c'];
+                let paths = '';
+                for (let i = 0; i < strandCount; i++) {
+                    const t = strandCount === 1 ? 0.5 : i / (strandCount - 1);
+                    const spread = (t - 0.5) * 2;
+                    const jitter = () => (Math.random() - 0.5);
+                    const length = 30 + Math.abs(spread) * 14 + Math.random() * 10;
+                    const sway = spread * (10 + Math.random() * 6) + jitter() * 4;
+                    const endX = startX + spread * 30 + sway * 0.4 + jitter() * 3;
+                    const endY = startY - length;
+                    const c1x = startX + spread * 6 + jitter() * 2;
+                    const c1y = startY - length * 0.35;
+                    const c2x = startX + sway + jitter() * 2;
+                    const c2y = startY - length * 0.72;
+                    const color = colors[i % colors.length];
+                    const width = (1 + Math.random() * 0.9).toFixed(2);
+                    const opacity = (0.55 + Math.random() * 0.35).toFixed(2);
+                    paths += `<path d="M${startX},${startY} C ${c1x.toFixed(1)},${c1y.toFixed(1)} ${c2x.toFixed(1)},${c2y.toFixed(1)} ${endX.toFixed(1)},${endY.toFixed(1)}" stroke="${color}" stroke-width="${width}" fill="none" stroke-linecap="round" opacity="${opacity}"></path>`;
+                }
+                document.getElementById('tassel-strands').innerHTML = paths;
             }
 
             // ---- date helpers ----
@@ -351,10 +543,12 @@
             keyFromDate(d) {
                 return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
             }
+            daysAgoKey(n) {
+                const d = new Date();
+                d.setDate(d.getDate() - n);
+                return this.keyFromDate(d);
+            }
 
-            // Archives yesterday's tally into history + lifetime total, then resets the
-            // daily counter to 0. This is what makes "پیشرفت هدف روزانه" actually mean
-            // *today's* progress instead of being stuck at 100% forever after day one.
             rolloverIfNeeded(d) {
                 const today = this.todayKey();
                 if (!d.lastActiveDate) { d.lastActiveDate = today; return null; }
@@ -422,8 +616,6 @@
                 }, 2800);
             }
 
-            // lightens (positive percent) or darkens (negative percent) a hex color —
-            // used to build the 3D-ish radial gradient shading on each bead
             shadeColor(hex, percent) {
                 hex = hex.replace('#', '');
                 const num = parseInt(hex, 16);
@@ -434,6 +626,19 @@
                 g = Math.max(0, Math.min(255, g));
                 b = Math.max(0, Math.min(255, b));
                 return '#' + (0x1000000 + r * 0x10000 + g * 0x100 + b).toString(16).slice(1);
+            }
+
+            getModelInfo(styleValue) {
+                if (styleValue && styleValue.startsWith('#')) {
+                    return { name: 'رنگ دلخواه', color: styleValue, shadow: 'rgba(0,0,0,0.35)' };
+                }
+                return TASBIH_MODELS[styleValue] || TASBIH_MODELS.shahmaghsoudi;
+            }
+
+            // bead count of the *current counting unit* — a whole dhikr, or (for the
+            // combo dhikr) just its active phase. Shared by rendering and the drag gesture.
+            getActiveBeadCount(d) {
+                return d.isCombo ? d.phases[d.phaseIndex].count : d.beadCount;
             }
 
             checkVibrationSupport() {
@@ -457,25 +662,50 @@
                     document.getElementById('theme-icon').className = 'fa-solid fa-moon';
                 }
             }
-
             toggleTheme() {
                 this.state.user.theme = this.state.user.theme === 'light' ? 'dark' : 'light';
                 this.saveState();
                 this.applyTheme();
             }
 
+            // ---- bottom-nav tab switching ----
+            switchTab(name) {
+                document.querySelectorAll('.tab-panel').forEach(el => el.classList.remove('active'));
+                document.getElementById('tab-' + name).classList.add('active');
+                document.querySelectorAll('.nav-btn').forEach(btn => {
+                    const active = btn.dataset.tab === name;
+                    btn.classList.toggle('active-tab', active);
+                    btn.querySelector('i').classList.toggle('text-slate-400', !active);
+                    btn.querySelector('span').classList.toggle('text-slate-400', !active);
+                });
+                if (name === 'dhikrs') { this.renderManageList(); this.renderLibrary(); }
+                if (name === 'stats') { this.switchStatsSubtab(this.statsSubtab); }
+                if (name === 'achievements') this.renderAchievementsGrid();
+                if (name === 'settings') this.renderSettingsScreen();
+            }
+
             populateDropdowns() {
                 const dhikrSelect = document.getElementById('dhikr-select');
                 dhikrSelect.innerHTML = this.state.dhikrs.map(d => `
-                    <option value="${d.id}" ${d.id === this.state.activeDhikrId ? 'selected' : ''}>${d.name} (امروز ${d.count})</option>
+                    <option value="${d.id}" ${d.id === this.state.activeDhikrId ? 'selected' : ''}>${d.favorite ? '⭐ ' : ''}${d.name} (امروز ${d.count})</option>
                 `).join('');
+            }
 
-                document.getElementById('model-select').value = this.state.settings.tasbihModel;
+            renderFavoritesStrip() {
+                const strip = document.getElementById('favorites-strip');
+                const favs = this.state.dhikrs.filter(d => d.favorite);
+                if (favs.length === 0) { strip.classList.add('hidden'); strip.innerHTML = ''; return; }
+                strip.classList.remove('hidden');
+                strip.innerHTML = favs.map(d => `
+                    <button onclick="app.changeActiveDhikr('${d.id}')" class="shrink-0 flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-full whitespace-nowrap ${d.id === this.state.activeDhikrId ? 'bg-emerald-600 text-white' : 'bg-amber-500/10 text-amber-700 dark:text-amber-400'}">
+                        ⭐ ${d.name}
+                    </button>
+                `).join('');
             }
 
             updateUI() {
                 const activeDhikr = this.state.dhikrs.find(d => d.id === this.state.activeDhikrId) || this.state.dhikrs[0];
-                const modelInfo = TASBIH_MODELS[this.state.settings.tasbihModel];
+                const modelInfo = this.getModelInfo(activeDhikr.beadStyle || this.state.settings.tasbihModel);
 
                 let displayName, beadCount, posInRound, roundText;
                 if (activeDhikr.isCombo) {
@@ -486,8 +716,6 @@
                     roundText = `فاز ${activeDhikr.phaseIndex + 1} از ${activeDhikr.phases.length} (دانه ${activeDhikr.phaseCount} از ${phase.count})`;
                 } else {
                     beadCount = activeDhikr.beadCount;
-                    // 0-based position within the current round; count=beadCount -> last bead (correct),
-                    // count=beadCount+1 -> wraps cleanly to 0 (start of next round)
                     posInRound = activeDhikr.count > 0 ? ((activeDhikr.count - 1) % beadCount + beadCount) % beadCount : 0;
                     const roundNum = activeDhikr.count > 0 ? Math.floor((activeDhikr.count - 1) / beadCount) + 1 : 1;
                     const beadNumberDisplay = activeDhikr.count > 0 ? posInRound + 1 : 0;
@@ -495,58 +723,59 @@
                     roundText = `دور ${roundNum} (دانه ${beadNumberDisplay} از ${beadCount})`;
                 }
 
-                // Update text elements
                 document.getElementById('counter-display').innerText = activeDhikr.count;
                 document.getElementById('active-dhikr-name').innerText = displayName;
-                document.getElementById('round-info').innerText = roundText;
+                const roundInfoEl = document.getElementById('round-info');
+                roundInfoEl.innerText = roundText;
+                roundInfoEl.classList.toggle('hidden', !this.state.settings.showRoundInfo);
 
-                // Update progress bar — activeDhikr.count is now the *daily* counter
-                // (see rolloverIfNeeded), so this genuinely reflects today's progress
                 const percent = Math.min(100, Math.round((activeDhikr.count / activeDhikr.target) * 100));
                 document.getElementById('target-percent').innerText = `${percent}%`;
                 document.getElementById('target-progress-bar').style.width = `${percent}%`;
                 document.getElementById('today-count').innerText = activeDhikr.count;
                 document.getElementById('lifetime-count').innerText = (activeDhikr.lifetimeCount || 0) + activeDhikr.count;
 
-                // Streak badge
                 document.getElementById('streak-text').innerText = `${this.state.streak.current || 0} روز`;
 
-                // Update Sound & Vibrate buttons state
                 document.getElementById('sound-btn').className = `flex flex-col items-center justify-center py-1 transition ${this.state.settings.soundEnabled ? 'text-emerald-600' : 'text-slate-400'}`;
                 document.getElementById('vibe-btn').className = `flex flex-col items-center justify-center py-1 transition ${this.state.settings.vibrationEnabled ? 'text-emerald-600' : 'text-slate-400'}`;
+
+                // calm-mode mirrors (only relevant while that overlay is open, harmless otherwise)
+                document.getElementById('calm-dhikr-name').innerText = displayName;
+                document.getElementById('calm-counter').innerText = activeDhikr.count.toLocaleString('fa-IR');
+                document.getElementById('calm-target').innerText = activeDhikr.target ? `از ${activeDhikr.target.toLocaleString('fa-IR')}` : '';
 
                 this.renderBeadsRing(beadCount, modelInfo, posInRound);
             }
 
-            // Draws a full circular necklace of beads and *rotates the whole ring* so the
-            // active bead always lands under the fixed pointer notch at the top — this is
-            // what gives the genuine "spinning tasbih" feeling, and there are no open/empty
-            // ends since it's a closed loop.
             renderBeadsRing(beadCount, modelInfo, posInRound) {
-                const N = Math.min(beadCount, 45); // cap purely for visual clarity on large custom counts
+                const N = Math.min(beadCount, 45);
                 const ringIndex = Math.min(N - 1, Math.round((posInRound / beadCount) * N));
+                const spacerIndices = new Set([Math.round(N / 3), Math.round((2 * N) / 3)]);
 
                 document.getElementById('beadGradLight').setAttribute('stop-color', this.shadeColor(modelInfo.color, 40));
                 document.getElementById('beadGradDark').setAttribute('stop-color', this.shadeColor(modelInfo.color, -35));
 
-                const cx = 100, cy = 100, r = 82;
+                const cx = 100, cy = 106, r = 68;
                 let svg = '';
                 for (let i = 0; i < N; i++) {
                     const angle = -Math.PI / 2 + (i / N) * Math.PI * 2;
                     const x = cx + r * Math.cos(angle);
                     const y = cy + r * Math.sin(angle);
-                    const isImam = i === 0; // the larger "marker" bead, like a real tasbih's separator bead
+                    const isSpacer = spacerIndices.has(i) && i !== 0;
                     const isActive = i === ringIndex;
-                    const radius = isActive ? 12 : (isImam ? 9.5 : 7.2);
-                    const fillUrl = isImam ? 'url(#beadGradGold)' : 'url(#beadGrad)';
+                    const radius = isActive ? 12 : (isSpacer ? 8 : 7.2);
                     const filterAttr = isActive ? 'filter="url(#beadGlow)"' : '';
-                    const strokeAttr = isActive ? 'stroke="#ffffff" stroke-width="1.3" stroke-opacity="0.85"' : '';
-                    svg += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${radius}" fill="${fillUrl}" ${filterAttr} ${strokeAttr} class="bead-node"></circle>`;
+                    const strokeAttr = isSpacer ? 'stroke="#d6b24e" stroke-width="2.2"' : (isActive ? 'stroke="#ffffff" stroke-width="1.3" stroke-opacity="0.85"' : '');
+                    const flashClass = isActive ? 'bead-flash' : '';
+                    svg += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${radius}" fill="url(#beadGrad)" ${filterAttr} ${strokeAttr} class="bead-node ${flashClass}"></circle>`;
                 }
                 const ring = document.getElementById('beads-ring');
                 ring.innerHTML = svg;
-                ring.style.transformOrigin = '100px 100px';
-                ring.style.transform = `rotate(${-(ringIndex * 360 / N)}deg)`;
+                const rotator = document.getElementById('tasbih-rotator');
+                rotator.style.transformOrigin = `${cx}px ${cy}px`;
+                rotator.style.transition = 'transform .38s cubic-bezier(.22,.85,.32,1.05)';
+                rotator.style.transform = `rotate(${-(ringIndex * 360 / N)}deg)`;
             }
 
             incrementCount() {
@@ -565,7 +794,6 @@
                             activeDhikr.phaseCount = 0;
                             this.showToast(`ادامه با: ${activeDhikr.phases[activeDhikr.phaseIndex].label}`);
                         } else {
-                            // full combo lap finished — wrap back to phase 1 for the next lap
                             activeDhikr.phaseIndex = 0;
                             activeDhikr.phaseCount = 0;
                         }
@@ -575,26 +803,20 @@
                 this.saveState();
                 this.updateUI();
                 this.populateDropdowns();
+                this.renderFavoritesStrip();
 
-                if (this.state.settings.vibrationEnabled) {
-                    this.hapticFeedback();
-                }
-                if (this.state.settings.soundEnabled) {
-                    this.playClickSound();
-                }
+                if (this.state.settings.vibrationEnabled) this.hapticFeedback();
+                if (this.state.settings.soundEnabled) this.playClickSound();
 
-                // Smooth pulse animation on counter
                 const counter = document.getElementById('counter-display');
                 counter.classList.remove('counter-pulse');
-                void counter.offsetWidth; // restart animation even on rapid repeated taps
+                void counter.offsetWidth;
                 counter.classList.add('counter-pulse');
 
-                // subtle flash + goal toast when the daily target is hit exactly now
                 if (activeDhikr.count === activeDhikr.target) {
                     this.showToast(`🎉 هدف امروز «${activeDhikr.name}» کامل شد`);
                 }
 
-                // subtle flash when a round (or, for the combo dhikr, a phase) completes
                 if (activeDhikr.isCombo ? phaseAdvanced : (activeDhikr.count % activeDhikr.beadCount === 0)) {
                     const pad = document.getElementById('tasbih-pad');
                     pad.classList.add('round-complete');
@@ -602,29 +824,24 @@
                 }
             }
 
-            // Tries, in order: Bale's mini-app haptic bridge (if this page is opened
-            // inside the actual Bale app), then the standard Web Vibration API,
-            // then fails silently. Standard navigator.vibrate() only works on
-            // Android Chrome/WebView with vibrate permission — it is NOT supported
-            // on iOS Safari/WebView at all (Apple has never implemented it), and it
-            // can also be silently blocked inside some in-app WebViews.
             hapticFeedback() {
+                const durations = { light: 10, medium: 25, strong: 45 };
+                const baleImpactMap = { light: 'light', medium: 'medium', strong: 'heavy' };
+                const strength = this.state.settings.vibrationStrength || 'medium';
                 try {
                     if (window.Bale && window.Bale.WebApp && window.Bale.WebApp.HapticFeedback
                         && typeof window.Bale.WebApp.HapticFeedback.impactOccurred === 'function') {
-                        window.Bale.WebApp.HapticFeedback.impactOccurred('light');
+                        window.Bale.WebApp.HapticFeedback.impactOccurred(baleImpactMap[strength]);
                         return true;
                     }
                     if (window.Bale && typeof window.Bale.vibrate === 'function') {
-                        window.Bale.vibrate(30);
+                        window.Bale.vibrate(durations[strength]);
                         return true;
                     }
                     if (window.navigator && typeof window.navigator.vibrate === 'function') {
-                        return window.navigator.vibrate(30);
+                        return window.navigator.vibrate(durations[strength]);
                     }
-                } catch (e) {
-                    console.warn('haptic feedback failed:', e);
-                }
+                } catch (e) { console.warn('haptic feedback failed:', e); }
                 return false;
             }
 
@@ -658,14 +875,90 @@
                 }
             }
 
+            // ---- drag-to-count gesture: a tap always counts once; dragging the finger
+            // around the pad counts additional beads proportional to angular distance
+            // traveled, like actually running your thumb along a real tasbih loop ----
+            setupCountingGestures() {
+                const pad = document.getElementById('tasbih-pad');
+                pad.addEventListener('pointerdown', (e) => {
+                    const rect = pad.getBoundingClientRect();
+                    const cx = rect.left + rect.width / 2;
+                    const cy = rect.top + rect.height / 2;
+                    const angle = Math.atan2(e.clientY - cy, e.clientX - cx);
+                    this.dragState = { cx, cy, lastAngle: angle, accum: 0 };
+                    try { pad.setPointerCapture(e.pointerId); } catch (err) {}
+                    this.incrementCount(); // the initial touch always counts once
+                });
+                pad.addEventListener('pointermove', (e) => {
+                    if (!this.dragState) return;
+                    const { cx, cy } = this.dragState;
+                    const angle = Math.atan2(e.clientY - cy, e.clientX - cx);
+                    let delta = angle - this.dragState.lastAngle;
+                    if (delta > Math.PI) delta -= 2 * Math.PI;
+                    if (delta < -Math.PI) delta += 2 * Math.PI;
+                    this.dragState.accum += delta;
+                    this.dragState.lastAngle = angle;
+
+                    const activeDhikr = this.state.dhikrs.find(d => d.id === this.state.activeDhikrId);
+                    if (!activeDhikr) return;
+                    const beadCount = this.getActiveBeadCount(activeDhikr);
+                    const stepAngle = (2 * Math.PI) / beadCount;
+                    let guard = 0;
+                    while (Math.abs(this.dragState.accum) >= stepAngle && guard < 50) {
+                        const dir = this.dragState.accum > 0 ? 1 : -1;
+                        this.dragState.accum -= dir * stepAngle;
+                        if (dir > 0) this.incrementCount(); else this.undoCount();
+                        guard++;
+                    }
+                });
+                const endDrag = () => { this.dragState = null; };
+                pad.addEventListener('pointerup', endDrag);
+                pad.addEventListener('pointercancel', endDrag);
+                pad.addEventListener('pointerleave', endDrag);
+            }
+
             changeActiveDhikr(id) {
                 this.state.activeDhikrId = id;
+                this.saveState();
+                this.syncModelPicker();
+                this.renderFavoritesStrip();
+                this.updateUI();
+            }
+
+            syncModelPicker() {
+                const d = this.state.dhikrs.find(x => x.id === this.state.activeDhikrId);
+                const style = d?.beadStyle || this.state.settings.tasbihModel;
+                const select = document.getElementById('model-select');
+                const colorInput = document.getElementById('custom-color-input');
+                if (style && style.startsWith('#')) {
+                    select.value = 'custom';
+                    colorInput.value = style;
+                    colorInput.classList.remove('hidden');
+                } else {
+                    select.value = style;
+                    colorInput.classList.add('hidden');
+                }
+            }
+
+            changeTasbihModel(modelKey) {
+                const d = this.state.dhikrs.find(x => x.id === this.state.activeDhikrId);
+                if (!d) return;
+                const colorInput = document.getElementById('custom-color-input');
+                if (modelKey === 'custom') {
+                    colorInput.classList.remove('hidden');
+                    d.beadStyle = colorInput.value;
+                } else {
+                    colorInput.classList.add('hidden');
+                    d.beadStyle = modelKey;
+                }
                 this.saveState();
                 this.updateUI();
             }
 
-            changeTasbihModel(modelKey) {
-                this.state.settings.tasbihModel = modelKey;
+            setCustomColor(hex) {
+                const d = this.state.dhikrs.find(x => x.id === this.state.activeDhikrId);
+                if (!d) return;
+                d.beadStyle = hex;
                 this.saveState();
                 this.updateUI();
             }
@@ -675,30 +968,40 @@
                 this.saveState();
                 this.updateUI();
             }
-
             toggleVibrate() {
                 this.state.settings.vibrationEnabled = !this.state.settings.vibrationEnabled;
                 this.saveState();
                 this.updateUI();
             }
 
-            // ---- screen navigation ----
-            openScreen(name) {
-                ['manage', 'history', 'achievements'].forEach(n => document.getElementById('screen-' + n).classList.add('hidden'));
-                document.getElementById('screen-' + name).classList.remove('hidden');
-                if (name === 'manage') this.renderManageList();
-                if (name === 'history') this.renderCalendar();
-                if (name === 'achievements') this.renderAchievementsGrid();
+            // ---- calm dhikr mode ----
+            openCalmMode() {
+                const screen = document.getElementById('screen-calm');
+                screen.classList.remove('hidden');
+                screen.classList.add('flex');
+                this.updateUI();
+                this.resetCalmDimTimer();
             }
-            closeScreens() {
-                ['manage', 'history', 'achievements'].forEach(n => document.getElementById('screen-' + n).classList.add('hidden'));
+            closeCalmMode() {
+                const screen = document.getElementById('screen-calm');
+                screen.classList.add('hidden');
+                screen.classList.remove('flex');
+                clearTimeout(this.calmDimTimer);
+                document.getElementById('calm-content').style.opacity = '1';
+            }
+            resetCalmDimTimer() {
+                const content = document.getElementById('calm-content');
+                content.style.opacity = '1';
+                clearTimeout(this.calmDimTimer);
+                this.calmDimTimer = setTimeout(() => { content.style.opacity = '0.35'; }, 4000);
             }
 
-            // ---- dhikr management (add/edit/delete) ----
+            // ---- dhikr management (add/edit/delete/favorite) ----
             renderManageList() {
                 const list = document.getElementById('manage-list');
                 list.innerHTML = this.state.dhikrs.map(d => `
                     <div class="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/60 rounded-2xl p-3">
+                        <button onclick="app.toggleFavorite('${d.id}')" class="shrink-0 text-lg ${d.favorite ? '' : 'opacity-30'}">⭐</button>
                         <div class="flex-1 min-w-0">
                             <div class="text-sm font-bold text-slate-800 dark:text-white truncate">${d.name}</div>
                             <div class="text-[11px] text-slate-400 mt-0.5">${d.isCombo ? 'هدف ترکیبی ۱۰۰ · ۳ فاز' : `هدف روزانه ${d.target} · دانه ${d.beadCount}`}</div>
@@ -709,6 +1012,50 @@
                         `}
                     </div>
                 `).join('');
+            }
+
+            toggleFavorite(id) {
+                const d = this.state.dhikrs.find(x => x.id === id);
+                if (!d) return;
+                d.favorite = !d.favorite;
+                this.saveState();
+                this.renderManageList();
+                this.renderFavoritesStrip();
+                this.populateDropdowns();
+            }
+
+            renderLibrary() {
+                const container = document.getElementById('library-list');
+                container.innerHTML = DHIKR_LIBRARY.map((group, gi) => `
+                    <div>
+                        <div class="text-[11.5px] font-bold text-slate-500 dark:text-slate-400 mb-1.5">${group.group}</div>
+                        <div class="space-y-1.5">
+                            ${group.items.map((item, ii) => `
+                                <div class="flex items-center justify-between bg-white dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 rounded-xl px-3 py-2">
+                                    <div class="text-xs text-slate-700 dark:text-slate-200">${item.name} <span class="text-slate-400 text-[10.5px]">(${item.target})</span></div>
+                                    <button onclick="app.addFromLibrary(${gi},${ii})" class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 px-2 py-1">+ افزودن</button>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            addFromLibrary(groupIndex, itemIndex) {
+                const item = DHIKR_LIBRARY[groupIndex].items[itemIndex];
+                if (this.state.dhikrs.some(d => d.name === item.name)) {
+                    this.showToast('این ذکر قبلاً در لیست شماست');
+                    return;
+                }
+                this.state.dhikrs.push({
+                    id: 'd_' + Date.now(), name: item.name, target: item.target, beadCount: item.beadCount,
+                    count: 0, lifetimeCount: 0, history: {}, lastActiveDate: this.todayKey(),
+                    beadStyle: item.beadStyle || this.state.settings.defaultBeadStyle, favorite: false
+                });
+                this.saveState();
+                this.populateDropdowns();
+                this.renderManageList();
+                this.showToast(`«${item.name}» اضافه شد`);
             }
 
             openDhikrForm(id) {
@@ -736,7 +1083,8 @@
                 } else {
                     this.state.dhikrs.push({
                         id: 'd_' + Date.now(), name, target, beadCount, count: 0,
-                        lifetimeCount: 0, history: {}, lastActiveDate: this.todayKey()
+                        lifetimeCount: 0, history: {}, lastActiveDate: this.todayKey(),
+                        beadStyle: this.state.settings.defaultBeadStyle, favorite: false
                     });
                     this.showToast('ذکر جدید اضافه شد');
                 }
@@ -756,23 +1104,88 @@
                 if (this.state.activeDhikrId === id) this.state.activeDhikrId = this.state.dhikrs[0].id;
                 this.saveState();
                 this.populateDropdowns();
+                this.syncModelPicker();
+                this.renderFavoritesStrip();
                 this.updateUI();
                 this.renderManageList();
                 this.showToast('ذکر حذف شد');
             }
 
-            // ---- history + Jalali (Shamsi) calendar, using the browser's built-in
-            // Persian-calendar support so we don't have to hand-roll conversion math ----
+            // ---- stats tab: overview + Jalali calendar ----
+            switchStatsSubtab(name) {
+                this.statsSubtab = name;
+                document.getElementById('stats-subtab-overview').classList.toggle('hidden', name !== 'overview');
+                document.getElementById('stats-subtab-calendar').classList.toggle('hidden', name !== 'calendar');
+                ['overview', 'calendar'].forEach(n => {
+                    const btn = document.getElementById(`stats-subtab-${n}-btn`);
+                    const active = n === name;
+                    btn.className = `text-[11px] font-bold px-3 py-1.5 rounded-full ${active ? 'bg-emerald-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-300'}`;
+                });
+                if (name === 'overview') this.renderStatsOverview();
+                if (name === 'calendar') this.renderCalendar();
+            }
+
+            getAggregatedHistory() {
+                const map = {};
+                const today = this.todayKey();
+                this.state.dhikrs.forEach(d => {
+                    Object.entries(d.history || {}).forEach(([k, v]) => { map[k] = (map[k] || 0) + v; });
+                    if (d.count > 0) map[today] = (map[today] || 0) + d.count;
+                });
+                return map;
+            }
+
+            renderStatsOverview() {
+                const map = this.getAggregatedHistory();
+                const today = this.todayKey();
+                const todayTotal = map[today] || 0;
+                let weekTotal = 0, monthTotal = 0;
+                for (let i = 0; i < 7; i++) weekTotal += map[this.daysAgoKey(i)] || 0;
+                for (let i = 0; i < 30; i++) monthTotal += map[this.daysAgoKey(i)] || 0;
+                const allTimeTotal = this.state.dhikrs.reduce((s, d) => s + (d.lifetimeCount || 0) + (d.count || 0), 0);
+
+                document.getElementById('stat-today').innerText = todayTotal.toLocaleString('fa-IR');
+                document.getElementById('stat-week').innerText = weekTotal.toLocaleString('fa-IR');
+                document.getElementById('stat-month').innerText = monthTotal.toLocaleString('fa-IR');
+                document.getElementById('stat-alltime').innerText = allTimeTotal.toLocaleString('fa-IR');
+
+                let bestDate = null, bestVal = -1;
+                Object.entries(map).forEach(([k, v]) => { if (v > bestVal) { bestVal = v; bestDate = k; } });
+                if (bestDate && bestVal > 0) {
+                    const weekday = new Date(bestDate + 'T00:00:00').toLocaleDateString('fa-IR', { weekday: 'long' });
+                    document.getElementById('stat-best-day').innerText = `${weekday} (${bestVal.toLocaleString('fa-IR')})`;
+                } else {
+                    document.getElementById('stat-best-day').innerText = '—';
+                }
+                const activeDays = Object.values(map).filter(v => v > 0).length || 1;
+                document.getElementById('stat-avg').innerText = Math.round(allTimeTotal / activeDays).toLocaleString('fa-IR');
+
+                const weekDayNamesFa = ['یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنجشنبه', 'جمعه', 'شنبه'];
+                const bars = [];
+                for (let i = 6; i >= 0; i--) {
+                    const d = new Date(); d.setDate(d.getDate() - i);
+                    bars.push({ label: weekDayNamesFa[d.getDay()].slice(0, 3), value: map[this.keyFromDate(d)] || 0 });
+                }
+                const max = Math.max(1, ...bars.map(b => b.value));
+                document.getElementById('week-chart').innerHTML = bars.map(b => `
+                    <div class="flex-1 flex flex-col items-center gap-1">
+                        <div class="text-[9px] text-slate-400">${b.value.toLocaleString('fa-IR')}</div>
+                        <div class="w-full bg-slate-100 dark:bg-slate-900/40 rounded-lg flex items-end overflow-hidden" style="height:70px">
+                            <div class="w-full bg-gradient-to-t from-emerald-600 to-emerald-400 rounded-t-lg transition-all" style="height:${Math.max(4, (b.value / max) * 100)}%"></div>
+                        </div>
+                        <div class="text-[9px] text-slate-400">${b.label}</div>
+                    </div>
+                `).join('');
+            }
+
             getJalaliParts(date) {
                 const fmt = new Intl.DateTimeFormat('fa-IR-u-ca-persian-nu-latn', { year: 'numeric', month: 'numeric', day: 'numeric' });
                 return fmt.formatToParts(date).reduce((acc, p) => { if (p.type !== 'literal') acc[p.type] = +p.value; return acc; }, {});
             }
-
             getDayTotal(key) {
                 const today = this.todayKey();
                 return this.state.dhikrs.reduce((sum, d) => sum + (key === today ? (d.count || 0) : (d.history?.[key] || 0)), 0);
             }
-
             renderCalendar() {
                 const now = new Date();
                 let days = [], monthLabel = '';
@@ -790,7 +1203,6 @@
                     const monthNames = ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'];
                     monthLabel = `${monthNames[jm - 1]} ${jy.toLocaleString('fa-IR')}`;
                 } catch (e) {
-                    // fallback if the device lacks Persian-calendar ICU data — a plain Gregorian grid
                     const y = now.getFullYear(), m = now.getMonth();
                     const count = new Date(y, m + 1, 0).getDate();
                     for (let i = 0; i < count; i++) days.push({ date: new Date(y, m, i + 1), label: i + 1 });
@@ -798,8 +1210,7 @@
                 }
 
                 document.getElementById('calendar-month-label').innerText = monthLabel;
-
-                const firstWeekday = (days[0].date.getDay() + 1) % 7; // Sat-first week
+                const firstWeekday = (days[0].date.getDay() + 1) % 7;
                 let html = '';
                 for (let i = 0; i < firstWeekday; i++) html += `<div></div>`;
 
@@ -814,10 +1225,8 @@
                     const ring = key === todayKey ? 'ring-2 ring-emerald-500' : '';
                     html += `<button onclick="app.showDayDetail('${key}')" class="aspect-square rounded-xl flex items-center justify-center text-[11px] font-bold ${bg} ${ring}">${label.toLocaleString('fa-IR')}</button>`;
                 });
-
                 document.getElementById('calendar-grid').innerHTML = html;
             }
-
             showDayDetail(key) {
                 const today = this.todayKey();
                 const parts = this.state.dhikrs
@@ -836,7 +1245,57 @@
                     </div>`;
             }
 
-            // ---- achievements screen ----
+            // ---- settings tab (personalization) ----
+            renderSettingsScreen() {
+                const vibGroup = document.getElementById('vibration-strength-group');
+                const vibOptions = [['light', 'کم'], ['medium', 'متوسط'], ['strong', 'زیاد']];
+                vibGroup.innerHTML = vibOptions.map(([key, label]) => `
+                    <button onclick="app.setVibrationStrength('${key}')" class="py-2 rounded-xl text-xs font-bold ${this.state.settings.vibrationStrength === key ? 'bg-emerald-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-300'}">${label}</button>
+                `).join('');
+
+                const soundGroup = document.getElementById('sound-style-group');
+                const soundOptions = [['soft', 'نرم'], ['click', 'کلیک'], ['bead', 'دانه‌ای']];
+                soundGroup.innerHTML = soundOptions.map(([key, label]) => `
+                    <button onclick="app.setSoundStyle('${key}')" class="py-2 rounded-xl text-xs font-bold ${this.state.settings.soundStyle === key ? 'bg-emerald-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-300'}">${label}</button>
+                `).join('');
+
+                const colorGroup = document.getElementById('default-color-group');
+                colorGroup.innerHTML = Object.entries(TASBIH_MODELS).map(([key, m]) => `
+                    <button onclick="app.setDefaultBeadStyle('${key}')" class="w-10 h-10 rounded-full ${this.state.settings.defaultBeadStyle === key ? 'ring-2 ring-offset-2 ring-emerald-600 dark:ring-offset-slate-900' : ''}" style="background:${m.color}"></button>
+                `).join('');
+
+                const toggle = document.getElementById('toggle-round-info');
+                const knob = toggle.querySelector('span');
+                toggle.classList.toggle('bg-emerald-600', this.state.settings.showRoundInfo);
+                toggle.classList.toggle('bg-slate-300', !this.state.settings.showRoundInfo);
+                toggle.classList.toggle('dark:bg-slate-700', !this.state.settings.showRoundInfo);
+                knob.style.transform = this.state.settings.showRoundInfo ? 'translateX(0)' : 'translateX(-20px)';
+            }
+            setVibrationStrength(v) {
+                this.state.settings.vibrationStrength = v;
+                this.saveState();
+                this.renderSettingsScreen();
+                this.hapticFeedback();
+            }
+            setSoundStyle(v) {
+                this.state.settings.soundStyle = v;
+                this.saveState();
+                this.renderSettingsScreen();
+                this.playClickSound();
+            }
+            setDefaultBeadStyle(v) {
+                this.state.settings.defaultBeadStyle = v;
+                this.saveState();
+                this.renderSettingsScreen();
+            }
+            toggleRoundInfoVisibility() {
+                this.state.settings.showRoundInfo = !this.state.settings.showRoundInfo;
+                this.saveState();
+                this.renderSettingsScreen();
+                this.updateUI();
+            }
+
+            // ---- achievements tab ----
             renderAchievementsGrid() {
                 const grid = document.getElementById('achievements-grid');
                 grid.innerHTML = ACHIEVEMENTS.map(a => {
@@ -855,20 +1314,38 @@
                     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                     const osc = audioCtx.createOscillator();
                     const gain = audioCtx.createGain();
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(600, audioCtx.currentTime);
-                    gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+                    const style = this.state.settings.soundStyle || 'soft';
+                    const presets = {
+                        soft: { type: 'sine', freq: 600, gain: 0.04, dur: 0.05 },
+                        click: { type: 'square', freq: 900, gain: 0.025, dur: 0.02 },
+                        bead: { type: 'triangle', freq: 320, gain: 0.05, dur: 0.08 }
+                    };
+                    const p = presets[style] || presets.soft;
+                    osc.type = p.type;
+                    osc.frequency.setValueAtTime(p.freq, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(p.gain, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + p.dur);
                     osc.connect(gain);
                     gain.connect(audioCtx.destination);
                     osc.start();
-                    osc.stop(audioCtx.currentTime + 0.05);
+                    osc.stop(audioCtx.currentTime + p.dur);
                 } catch (e) {}
             }
         }
 
         const app = new BaleZekrinoApp();
         window.addEventListener('DOMContentLoaded', () => app.init());
+
+        // calm-mode tap-to-count + inactivity dimmer (kept outside the class since it
+        // binds directly to the overlay element once, at load time)
+        window.addEventListener('DOMContentLoaded', () => {
+            const calmScreen = document.getElementById('screen-calm');
+            calmScreen.addEventListener('pointerdown', (e) => {
+                if (e.target.closest('button')) return; // don't count taps on the close button
+                app.incrementCount();
+                app.resetCalmDimTimer();
+            });
+        });
     </script>
 </body>
 </html>
