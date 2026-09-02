@@ -442,7 +442,17 @@
                         defaultBeadStyle: 'shahmaghsoudi', showRoundInfo: true, ...(parsed.settings || {})
                     };
                     parsed.dhikrs = (parsed.dhikrs || []).map(d => (
-                        d.id === 'combo-tasbih' ? { ...DEFAULT_COMBO_DHIKR, ...d } : {
+                        d.id === 'combo-tasbih' ? {
+                            ...DEFAULT_COMBO_DHIKR, ...d,
+                            // these fields aren't user-editable for the combo dhikr, so
+                            // always use the current built-in definition — never let old
+                            // saved data (e.g. a previous name) silently override a fix
+                            name: DEFAULT_COMBO_DHIKR.name,
+                            phases: DEFAULT_COMBO_DHIKR.phases,
+                            target: DEFAULT_COMBO_DHIKR.target,
+                            beadCount: DEFAULT_COMBO_DHIKR.beadCount,
+                            isCombo: true
+                        } : {
                             lifetimeCount: 0, history: {}, lastActiveDate: null, favorite: false,
                             beadStyle: parsed.settings.tasbihModel || 'shahmaghsoudi', ...d
                         }
