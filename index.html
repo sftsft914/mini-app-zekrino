@@ -64,7 +64,7 @@
 
         <header class="px-4 py-3 flex items-center justify-between border-b border-slate-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md z-20 shrink-0">
             <div class="flex items-center space-x-3 space-x-reverse">
-                <div class="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-lg font-bold glow-effect">📿</div>
+                <div onclick="app.handleLogoTap()" class="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-lg font-bold glow-effect cursor-pointer">📿</div>
                 <div>
                     <h1 class="font-bold text-sm leading-tight text-slate-900 dark:text-white">تسبیح هوشمند بله</h1>
                     <p class="text-[10px] text-slate-400">ذکر و معنویت دیجیتال</p>
@@ -74,6 +74,9 @@
                 <div id="streak-badge" class="flex items-center gap-1 text-[11px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2.5 py-1.5 rounded-full">
                     <i class="fa-solid fa-fire text-[11px]"></i><span id="streak-text">۰</span>
                 </div>
+                <button onclick="app.openQiblaMode()" title="قبله‌نما" class="w-9 h-9 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                    <i class="fa-solid fa-kaaba"></i>
+                </button>
                 <button onclick="app.openCalmMode()" title="حالت ذکر آرام" class="w-9 h-9 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
                     <i class="fa-solid fa-spa"></i>
                 </button>
@@ -101,6 +104,15 @@
                 </div>
 
                 <div id="favorites-strip" class="hidden flex items-center gap-1.5 overflow-x-auto pb-1"></div>
+
+                <div id="narration-card" class="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-slate-800/40 border border-emerald-100 dark:border-emerald-900/40 rounded-2xl p-3.5">
+                    <div class="flex items-center gap-1.5 text-[10.5px] font-bold text-emerald-700 dark:text-emerald-400 mb-2">
+                        <i class="fa-solid fa-book-open"></i> روایت امروز
+                    </div>
+                    <div id="narration-arabic" class="text-sm text-slate-800 dark:text-emerald-50 leading-8 text-center font-medium mb-1.5"></div>
+                    <div id="narration-translation" class="text-[11.5px] text-slate-500 dark:text-slate-400 leading-6 text-center"></div>
+                    <div id="narration-source" class="text-[10px] text-emerald-600 dark:text-emerald-500 text-left mt-2 font-semibold"></div>
+                </div>
             </div>
 
             <div class="flex flex-col items-center justify-center my-auto space-y-4 py-2">
@@ -314,6 +326,7 @@
                         <span class="absolute top-0.5 right-0.5 w-5 h-5 bg-white rounded-full transition-transform"></span>
                     </button>
                 </div>
+                <div id="settings-extra-slot"></div>
             </div>
         </div>
 
@@ -348,6 +361,59 @@
             <div id="calm-counter" class="text-7xl font-black text-white breathe">۰</div>
             <div id="calm-target" class="text-xs text-emerald-200/50">از ۱۰۰</div>
             <div class="text-[11px] text-emerald-200/40 mt-4 tracking-wide">آرام نفس بکش، و ذکر بگو…</div>
+        </div>
+    </div>
+
+    <!-- ===================== QIBLA COMPASS ===================== -->
+    <div id="screen-qibla" class="hidden fixed inset-0 z-[60] bg-slate-950 text-white flex-col items-center">
+        <div class="w-full max-w-md flex flex-col items-center px-5 pt-6 pb-8 h-full overflow-y-auto">
+            <div class="w-full flex items-center justify-between mb-4">
+                <button onclick="app.closeQiblaMode()" class="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-white/70">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                <h2 class="font-bold text-sm">قبله‌نما</h2>
+                <div class="w-9"></div>
+            </div>
+
+            <div class="relative w-64 h-64 my-4">
+                <div class="absolute inset-0 rounded-full border-2 border-white/15"></div>
+                <div class="absolute inset-3 rounded-full border border-white/10"></div>
+                <span class="absolute top-1 left-1/2 -translate-x-1/2 text-[11px] text-white/40 font-bold">N</span>
+                <span class="absolute bottom-1 left-1/2 -translate-x-1/2 text-[11px] text-white/40 font-bold">S</span>
+                <span class="absolute left-1 top-1/2 -translate-y-1/2 text-[11px] text-white/40 font-bold">W</span>
+                <span class="absolute right-1 top-1/2 -translate-y-1/2 text-[11px] text-white/40 font-bold">E</span>
+                <div id="qibla-needle" class="absolute inset-0 flex items-start justify-center transition-transform duration-300" style="transform: rotate(0deg)">
+                    <div class="flex flex-col items-center mt-3">
+                        <div class="text-2xl">🕋</div>
+                        <div class="w-1 h-24 bg-gradient-to-b from-emerald-400 to-transparent rounded-full mt-1"></div>
+                    </div>
+                </div>
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <div class="w-3 h-3 rounded-full bg-white/70"></div>
+                </div>
+            </div>
+
+            <div id="qibla-status" class="text-center text-xs text-white/60 leading-6 px-4 min-h-[3rem]">
+                برای پیدا کردن جهت قبله، دسترسی به موقعیت مکانی رو فعال کن.
+            </div>
+
+            <div id="qibla-numbers" class="hidden text-center mb-3">
+                <div class="text-[11px] text-white/40">زاویهٔ قبله از شمال</div>
+                <div id="qibla-bearing-text" class="text-lg font-black text-emerald-400">—</div>
+            </div>
+
+            <div class="w-full space-y-2 mt-2">
+                <button onclick="app.requestQiblaLocation()" class="w-full py-3 rounded-2xl bg-emerald-600 text-white text-sm font-bold">
+                    <i class="fa-solid fa-location-crosshairs ml-1.5"></i> دریافت موقعیت مکانی
+                </button>
+                <button id="qibla-compass-btn" onclick="app.requestCompassPermission()" class="hidden w-full py-3 rounded-2xl bg-white/10 text-white text-sm font-bold">
+                    <i class="fa-solid fa-compass ml-1.5"></i> فعال‌سازی قطب‌نمای گوشی
+                </button>
+            </div>
+
+            <div class="text-[10.5px] text-white/30 leading-6 mt-4 px-2 text-center">
+                دقت قطب‌نما به سنسورهای گوشی و مرورگر بستگی داره. اگه جهت‌یابی درست نبود، گوشی رو به‌شکل عدد ۸ چند بار در هوا حرکت بده تا کالیبره بشه. روی برخی مرورگرها یا داخل اپ بله ممکنه فقط زاویهٔ عددی قبله در دسترس باشه، نه چرخش زندهٔ قطب‌نما.
+            </div>
         </div>
     </div>
 
@@ -396,6 +462,49 @@
             ]}
         ];
 
+        // A small, carefully-sourced set of Quran verses and hadiths about dhikr.
+        // Kept intentionally short (a handful of well-known, clearly-attributed items)
+        // rather than a large invented database — accuracy matters more than quantity
+        // for religious content. Sources: the Quran itself, and Usul al-Kafi (a core
+        // Shia hadith collection) narrated from Imam Ja'far al-Sadiq (a.s.).
+        const NARRATIONS = [
+            {
+                arabic: 'أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلُوبُ',
+                translation: 'آگاه باشید، تنها با یاد خدا دل‌ها آرام می‌گیرد.',
+                source: 'قرآن کریم، سورهٔ رعد، آیهٔ ۲۸'
+            },
+            {
+                arabic: 'يَا أَيُّهَا الَّذِينَ آمَنُوا اذْكُرُوا اللَّهَ ذِكْرًا كَثِيرًا',
+                translation: 'ای مؤمنان، خدا را بسیار یاد کنید.',
+                source: 'قرآن کریم، سورهٔ احزاب، آیهٔ ۴۱'
+            },
+            {
+                arabic: 'فَاذْكُرُونِي أَذْكُرْكُمْ',
+                translation: 'پس مرا یاد کنید تا شما را یاد کنم.',
+                source: 'قرآن کریم، سورهٔ بقره، آیهٔ ۱۵۲'
+            },
+            {
+                arabic: 'مَنْ أَکْثَرَ ذِکْرَ اللَّهِ أَظَلَّهُ اللَّهُ فِی جَنَّتِهِ',
+                translation: 'هر که بسیار یاد خدا کند، خداوند او را زیر سایهٔ لطف خود در بهشت جای می‌دهد.',
+                source: 'امام صادق (ع)، اصول کافی'
+            },
+            {
+                arabic: 'إِنَّ الصَّوَاعِقَ لَا تُصِیبُ ذَاکِراً',
+                translation: 'صاعقه به کسی که ذکر خدا می‌گوید، آسیب نمی‌رساند.',
+                source: 'امام صادق (ع)، اصول کافی'
+            },
+            {
+                arabic: 'مَنْ شُغِلَ بِذِکْرِی عَنْ مَسْأَلَتِی أَعْطَیْتُهُ أَفْضَلَ مَا أُعْطِی السَّائِلِینَ',
+                translation: 'هر که ذکر من، او را از درخواست از من بازدارد، بهتر از آنچه به خواهندگان می‌دهم، به او می‌بخشم.',
+                source: 'حدیث قدسی، به روایت امام صادق (ع)، اصول کافی'
+            },
+            {
+                arabic: 'یَا عِیسَی اذْکُرْنِی فِی نَفْسِکَ أَذْکُرْکَ فِی نَفْسِی',
+                translation: 'ای عیسی، مرا در دل خود یاد کن، تو را نزد خود یاد می‌کنم.',
+                source: 'حدیث قدسی، به روایت امام صادق (ع)، اصول کافی'
+            }
+        ];
+
         const DEFAULT_STATE = {
             user: { theme: 'dark' },
             activeDhikrId: 'd-1',
@@ -428,6 +537,11 @@
                 this.statsSubtab = 'overview';
                 this.calmDimTimer = null;
                 this.dragState = null;
+                this.liveNarrations = null;
+                this.adminNarrations = this.loadAdminNarrations();
+                this.editingNarrationIndex = null;
+                this.logoTapCount = 0;
+                this.logoTapTimer = null;
             }
 
             loadState() {
@@ -471,7 +585,7 @@
                 localStorage.setItem('bale_zekrino_state', JSON.stringify(this.state));
             }
 
-            init() {
+            async init() {
                 this.applyTheme();
                 this.rolloverAll();
                 this.populateDropdowns();
@@ -479,6 +593,9 @@
                 this.checkVibrationSupport();
                 this.renderTassel();
                 this.renderFavoritesStrip();
+                await this.loadNarrationsSource();
+                this.renderNarrationCard();
+                this.checkAdminUnlock();
                 this.setupCountingGestures();
                 this.updateUI();
 
@@ -711,6 +828,220 @@
                         ⭐ ${d.name}
                     </button>
                 `).join('');
+            }
+
+            // Tries to fetch a shared narrations.json hosted next to index.html (this is
+            // what makes narrations you add here visible to everyone, not just you) —
+            // falls back to the built-in curated list if it's not there yet, or if this
+            // page is running somewhere without real file hosting (e.g. a preview sandbox).
+            async loadNarrationsSource() {
+                try {
+                    const res = await fetch('narrations.json', { cache: 'no-store' });
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (Array.isArray(data) && data.length > 0) {
+                            this.liveNarrations = data;
+                            return;
+                        }
+                    }
+                } catch (e) { /* not deployed yet, offline, or sandboxed preview — fine */ }
+                this.liveNarrations = NARRATIONS;
+            }
+
+            // Shows the same narration all day (rotates by day-of-year), then a
+            // different one the next day — like a "quote of the day" rather than a
+            // fully-random pick on every open, which would feel repetitive.
+            renderNarrationCard() {
+                const list = this.liveNarrations || NARRATIONS;
+                const now = new Date();
+                const startOfYear = new Date(now.getFullYear(), 0, 0);
+                const dayOfYear = Math.floor((now - startOfYear) / 86400000);
+                const n = list[dayOfYear % list.length];
+                document.getElementById('narration-arabic').innerText = n.arabic;
+                document.getElementById('narration-translation').innerText = n.translation;
+                document.getElementById('narration-source').innerText = n.source || '';
+            }
+
+            // ---- admin-only reveal: nothing about this feature — not the settings
+            // button, not the editor screen, not the "how to upload to GitHub"
+            // instructions — exists in the page's initial HTML at all. It's only ever
+            // constructed by JavaScript, and only after the correct unlock gesture.
+            // (Being fully honest: this raises the bar against casual view-source
+            // snooping, but anyone opening browser devtools while it's active could
+            // still find it — there is no such thing as a real secret in client-only
+            // code without a server-side login.)
+            checkAdminUnlock() {
+                const urlUnlock = new URLSearchParams(location.search).get('admin') === '1';
+                const remembered = localStorage.getItem('zekrino_admin_unlocked') === '1';
+                if (urlUnlock) localStorage.setItem('zekrino_admin_unlocked', '1');
+                if (urlUnlock || remembered) this.revealAdminButton();
+            }
+            revealAdminButton() {
+                const slot = document.getElementById('settings-extra-slot');
+                if (document.getElementById('narrations-admin-btn')) return; // already injected
+                slot.insertAdjacentHTML('beforeend', `
+                    <button id="narrations-admin-btn" onclick="app.openNarrationsAdmin()" class="w-full flex items-center justify-between bg-slate-50 dark:bg-slate-800/60 rounded-2xl px-4 py-3 mt-3">
+                        <span class="text-xs font-semibold text-slate-700 dark:text-slate-200"><i class="fa-solid fa-book-open ml-1.5 text-emerald-600"></i> مدیریت روایت‌های «روایت امروز»</span>
+                        <i class="fa-solid fa-chevron-left text-slate-400 text-xs"></i>
+                    </button>
+                `);
+            }
+            handleLogoTap() {
+                this.logoTapCount++;
+                clearTimeout(this.logoTapTimer);
+                this.logoTapTimer = setTimeout(() => { this.logoTapCount = 0; }, 2500);
+                if (this.logoTapCount >= 7) {
+                    this.logoTapCount = 0;
+                    localStorage.setItem('zekrino_admin_unlocked', '1');
+                    this.revealAdminButton();
+                    this.showToast('🔓 دسترسی مدیریت روایت‌ها باز شد (توی تنظیمات)');
+                }
+            }
+
+            // builds the editor screen + form sheet into the DOM on first use — never
+            // present beforehand, so it never appears in page source either
+            ensureAdminUIBuilt() {
+                if (document.getElementById('screen-narrations-admin')) return;
+                document.body.insertAdjacentHTML('beforeend', `
+                    <div id="screen-narrations-admin" class="hidden fixed inset-0 z-[60] bg-white dark:bg-slate-900 flex-col">
+                        <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-800 shrink-0">
+                            <button onclick="app.closeNarrationsAdmin()" class="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-300"><i class="fa-solid fa-xmark"></i></button>
+                            <h2 class="font-bold text-sm text-slate-900 dark:text-white">مدیریت روایت‌ها</h2>
+                            <button onclick="app.openNarrationForm()" class="w-9 h-9 rounded-full bg-emerald-600 text-white flex items-center justify-center"><i class="fa-solid fa-plus text-xs"></i></button>
+                        </div>
+                        <div class="px-4 py-3 bg-amber-50 dark:bg-amber-900/20 text-[11px] text-amber-700 dark:text-amber-400 leading-6 shrink-0">
+                            این‌جا لیست رو می‌سازی، بعد پایین دکمهٔ «دانلود narrations.json» رو بزن و اون فایل رو کنار index.html روی گیت‌هابت آپلود کن — از اون به بعد این لیست برای همهٔ کسانی که اپ رو باز می‌کنن نمایش داده می‌شه.
+                        </div>
+                        <div id="narrations-admin-list" class="flex-1 overflow-y-auto p-3 space-y-2"></div>
+                        <div class="p-3 border-t border-slate-100 dark:border-slate-800 space-y-2 shrink-0">
+                            <button onclick="app.exportNarrationsJson()" class="w-full py-3 rounded-2xl bg-emerald-600 text-white text-sm font-bold">
+                                <i class="fa-solid fa-download ml-1.5"></i> دانلود narrations.json
+                            </button>
+                            <button onclick="app.resetNarrationsToDefault()" class="w-full py-2.5 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-xs font-semibold">
+                                بازگشت به لیست پیش‌فرض
+                            </button>
+                        </div>
+                    </div>
+                    <div id="narration-form-sheet" class="hidden fixed inset-0 bg-black/50 z-[70] flex items-end justify-center">
+                        <div class="w-full max-w-md bg-white dark:bg-slate-900 rounded-t-3xl p-5 space-y-3">
+                            <div class="w-10 h-1 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mb-1"></div>
+                            <h3 id="narration-form-title" class="font-bold text-sm text-slate-900 dark:text-white">روایت جدید</h3>
+                            <div>
+                                <label class="text-[11px] text-slate-400 block mb-1">متن اصلی (عربی/فارسی — هرچی خودت می‌خوای)</label>
+                                <textarea id="narration-form-arabic" rows="2" placeholder="مثلاً: مَنْ أَکْثَرَ ذِکْرَ اللَّهِ..." class="w-full text-sm bg-slate-100 dark:bg-slate-800 rounded-xl px-3 py-2.5 outline-none text-slate-800 dark:text-white resize-none"></textarea>
+                            </div>
+                            <div>
+                                <label class="text-[11px] text-slate-400 block mb-1">ترجمه / توضیح</label>
+                                <textarea id="narration-form-translation" rows="2" placeholder="ترجمهٔ فارسی یا پیام خودت" class="w-full text-sm bg-slate-100 dark:bg-slate-800 rounded-xl px-3 py-2.5 outline-none text-slate-800 dark:text-white resize-none"></textarea>
+                            </div>
+                            <div>
+                                <label class="text-[11px] text-slate-400 block mb-1">منبع (اختیاری)</label>
+                                <input id="narration-form-source" type="text" placeholder="مثلاً: امام صادق (ع)، اصول کافی" class="w-full text-sm bg-slate-100 dark:bg-slate-800 rounded-xl px-3 py-2.5 outline-none text-slate-800 dark:text-white">
+                            </div>
+                            <div class="flex gap-2 pt-2">
+                                <button onclick="app.closeNarrationForm()" class="flex-1 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-sm font-semibold">انصراف</button>
+                                <button onclick="app.saveNarrationForm()" class="flex-1 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-semibold">ذخیره</button>
+                            </div>
+                        </div>
+                    </div>
+                `);
+            }
+
+            // ---- narrations admin (lets the app owner curate what "روایت امروز" shows) ----
+            loadAdminNarrations() {
+                try {
+                    const raw = localStorage.getItem('zekrino_admin_narrations');
+                    if (raw) return JSON.parse(raw);
+                } catch (e) {}
+                return null; // null = not started editing yet; seed on first open
+            }
+            saveAdminNarrations() {
+                localStorage.setItem('zekrino_admin_narrations', JSON.stringify(this.adminNarrations));
+            }
+
+            openNarrationsAdmin() {
+                this.ensureAdminUIBuilt();
+                if (!this.adminNarrations) {
+                    this.adminNarrations = JSON.parse(JSON.stringify(this.liveNarrations || NARRATIONS));
+                    this.saveAdminNarrations();
+                }
+                const screen = document.getElementById('screen-narrations-admin');
+                screen.classList.remove('hidden');
+                screen.classList.add('flex');
+                this.renderNarrationsAdminList();
+            }
+            closeNarrationsAdmin() {
+                const screen = document.getElementById('screen-narrations-admin');
+                screen.classList.add('hidden');
+                screen.classList.remove('flex');
+            }
+
+            renderNarrationsAdminList() {
+                const list = document.getElementById('narrations-admin-list');
+                list.innerHTML = this.adminNarrations.map((n, i) => `
+                    <div class="bg-slate-50 dark:bg-slate-800/60 rounded-2xl p-3">
+                        <div class="text-sm font-medium text-slate-800 dark:text-white mb-1 leading-7">${n.arabic}</div>
+                        <div class="text-[11.5px] text-slate-500 dark:text-slate-400 mb-1.5 leading-6">${n.translation}</div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-[10px] text-emerald-600 dark:text-emerald-400">${n.source || ''}</span>
+                            <div class="flex gap-1.5">
+                                <button onclick="app.openNarrationForm(${i})" class="w-7 h-7 rounded-full bg-white dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-300"><i class="fa-solid fa-pen text-[10px]"></i></button>
+                                <button onclick="app.deleteNarration(${i})" class="w-7 h-7 rounded-full bg-white dark:bg-slate-700 flex items-center justify-center text-red-500"><i class="fa-solid fa-trash text-[10px]"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            openNarrationForm(index) {
+                this.editingNarrationIndex = (index !== undefined) ? index : null;
+                const n = this.editingNarrationIndex !== null ? this.adminNarrations[this.editingNarrationIndex] : null;
+                document.getElementById('narration-form-title').innerText = n ? 'ویرایش روایت' : 'روایت جدید';
+                document.getElementById('narration-form-arabic').value = n ? n.arabic : '';
+                document.getElementById('narration-form-translation').value = n ? n.translation : '';
+                document.getElementById('narration-form-source').value = n ? (n.source || '') : '';
+                document.getElementById('narration-form-sheet').classList.remove('hidden');
+            }
+            closeNarrationForm() {
+                document.getElementById('narration-form-sheet').classList.add('hidden');
+            }
+            saveNarrationForm() {
+                const arabic = document.getElementById('narration-form-arabic').value.trim();
+                const translation = document.getElementById('narration-form-translation').value.trim();
+                const source = document.getElementById('narration-form-source').value.trim();
+                if (!arabic || !translation) { this.showToast('متن و ترجمه رو کامل کن'); return; }
+                const entry = { arabic, translation, source };
+                if (this.editingNarrationIndex !== null) {
+                    this.adminNarrations[this.editingNarrationIndex] = entry;
+                } else {
+                    this.adminNarrations.push(entry);
+                }
+                this.saveAdminNarrations();
+                this.renderNarrationsAdminList();
+                this.closeNarrationForm();
+                this.showToast('ذخیره شد — یادت نره در پایان دانلود و آپلودش کنی');
+            }
+            deleteNarration(index) {
+                if (this.adminNarrations.length <= 1) { this.showToast('حداقل یک روایت باید باقی بماند'); return; }
+                if (!confirm('این روایت حذف شود؟')) return;
+                this.adminNarrations.splice(index, 1);
+                this.saveAdminNarrations();
+                this.renderNarrationsAdminList();
+            }
+            resetNarrationsToDefault() {
+                if (!confirm('لیست فعلی پاک شود و به حالت پیش‌فرض برگردد؟')) return;
+                this.adminNarrations = JSON.parse(JSON.stringify(NARRATIONS));
+                this.saveAdminNarrations();
+                this.renderNarrationsAdminList();
+            }
+            exportNarrationsJson() {
+                const blob = new Blob([JSON.stringify(this.adminNarrations, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = 'narrations.json';
+                document.body.appendChild(a); a.click(); a.remove();
+                URL.revokeObjectURL(url);
+                this.showToast('فایل narrations.json دانلود شد — کنار index.html روی گیت‌هاب آپلودش کن');
             }
 
             updateUI() {
@@ -1004,6 +1335,112 @@
                 content.style.opacity = '1';
                 clearTimeout(this.calmDimTimer);
                 this.calmDimTimer = setTimeout(() => { content.style.opacity = '0.35'; }, 4000);
+            }
+
+            // ---- Qibla compass ----
+            // Kaaba coordinates (Masjid al-Haram, Mecca)
+            static QIBLA_LAT = 21.422487;
+            static QIBLA_LNG = 39.826206;
+
+            openQiblaMode() {
+                const screen = document.getElementById('screen-qibla');
+                screen.classList.remove('hidden');
+                screen.classList.add('flex');
+            }
+            closeQiblaMode() {
+                const screen = document.getElementById('screen-qibla');
+                screen.classList.add('hidden');
+                screen.classList.remove('flex');
+                if (this._orientationHandler) {
+                    window.removeEventListener('deviceorientationabsolute', this._orientationHandler, true);
+                    window.removeEventListener('deviceorientation', this._orientationHandler, true);
+                }
+            }
+
+            setQiblaStatus(msg) {
+                const el = document.getElementById('qibla-status');
+                if (el) el.innerText = msg;
+            }
+
+            // standard great-circle initial-bearing formula from (lat,lng) to the Kaaba
+            calculateQiblaBearing(lat, lng) {
+                const phiK = BaleZekrinoApp.QIBLA_LAT * Math.PI / 180;
+                const lambdaK = BaleZekrinoApp.QIBLA_LNG * Math.PI / 180;
+                const phi = lat * Math.PI / 180;
+                const lambda = lng * Math.PI / 180;
+                const psi = Math.atan2(
+                    Math.sin(lambdaK - lambda),
+                    Math.cos(phi) * Math.tan(phiK) - Math.sin(phi) * Math.cos(lambdaK - lambda)
+                );
+                return (psi * 180 / Math.PI + 360) % 360;
+            }
+
+            requestQiblaLocation() {
+                if (!navigator.geolocation) {
+                    this.setQiblaStatus('این مرورگر از موقعیت مکانی پشتیبانی نمی‌کند.');
+                    return;
+                }
+                this.setQiblaStatus('در حال دریافت موقعیت مکانی…');
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        this.qiblaBearing = this.calculateQiblaBearing(pos.coords.latitude, pos.coords.longitude);
+                        document.getElementById('qibla-numbers').classList.remove('hidden');
+                        document.getElementById('qibla-bearing-text').innerText = `${Math.round(this.qiblaBearing).toLocaleString('fa-IR')}°`;
+                        this.setQiblaStatus('موقعیت پیدا شد. حالا قطب‌نمای گوشی رو فعال کن تا تسبیح خودش بچرخه.');
+
+                        const needsExplicitPermission = typeof DeviceOrientationEvent !== 'undefined'
+                            && typeof DeviceOrientationEvent.requestPermission === 'function';
+                        if (needsExplicitPermission) {
+                            document.getElementById('qibla-compass-btn').classList.remove('hidden');
+                        } else if (window.DeviceOrientationEvent) {
+                            this.attachOrientationListener();
+                        } else {
+                            this.setQiblaStatus(`موقعیت پیدا شد، اما این دستگاه/مرورگر قطب‌نمای زنده نداره. قبله در زاویهٔ ${Math.round(this.qiblaBearing).toLocaleString('fa-IR')}° از شمال جغرافیایی است — با یک قطب‌نمای معمولی این زاویه رو پیدا کن.`);
+                        }
+                    },
+                    (err) => {
+                        const msgs = {
+                            1: 'اجازهٔ دسترسی به موقعیت مکانی داده نشد.',
+                            2: 'موقعیت مکانی در دسترس نیست.',
+                            3: 'زمان دریافت موقعیت تمام شد.'
+                        };
+                        this.setQiblaStatus(msgs[err.code] || 'خطا در دریافت موقعیت مکانی.');
+                    },
+                    { enableHighAccuracy: true, timeout: 10000 }
+                );
+            }
+
+            requestCompassPermission() {
+                DeviceOrientationEvent.requestPermission()
+                    .then((state) => {
+                        if (state === 'granted') {
+                            document.getElementById('qibla-compass-btn').classList.add('hidden');
+                            this.attachOrientationListener();
+                        } else {
+                            this.setQiblaStatus('اجازهٔ قطب‌نما داده نشد — فقط زاویهٔ عددی قبله در دسترسه.');
+                        }
+                    })
+                    .catch(() => this.setQiblaStatus('فعال‌سازی قطب‌نما با خطا مواجه شد.'));
+            }
+
+            attachOrientationListener() {
+                this._orientationHandler = (event) => this.handleOrientation(event);
+                window.addEventListener('deviceorientationabsolute', this._orientationHandler, true);
+                window.addEventListener('deviceorientation', this._orientationHandler, true);
+            }
+
+            handleOrientation(event) {
+                let heading = null;
+                if (typeof event.webkitCompassHeading === 'number') {
+                    heading = event.webkitCompassHeading; // iOS Safari: already a compass heading
+                } else if (event.alpha !== null && event.alpha !== undefined) {
+                    heading = (360 - event.alpha) % 360; // common mapping for the standard DeviceOrientation alpha
+                }
+                if (heading === null || this.qiblaBearing === undefined) return;
+
+                const rotation = (this.qiblaBearing - heading + 360) % 360;
+                document.getElementById('qibla-needle').style.transform = `rotate(${rotation}deg)`;
+                this.setQiblaStatus('🕋 وقتی مکه بالای دایره قرار بگیره، رو به قبله‌ای.');
             }
 
             // ---- dhikr management (add/edit/delete/favorite) ----
