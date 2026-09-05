@@ -397,9 +397,10 @@
                 برای پیدا کردن جهت قبله، دسترسی به موقعیت مکانی رو فعال کن.
             </div>
 
-            <div id="qibla-numbers" class="hidden text-center mb-3">
+            <div id="qibla-numbers" class="hidden text-center mb-1">
                 <div class="text-[11px] text-white/40">زاویهٔ قبله از شمال</div>
                 <div id="qibla-bearing-text" class="text-lg font-black text-emerald-400">—</div>
+                <div id="qibla-coords-text" class="text-[10px] text-white/30 mt-1"></div>
             </div>
 
             <div class="w-full space-y-2 mt-2">
@@ -411,8 +412,25 @@
                 </button>
             </div>
 
+            <div class="w-full mt-3">
+                <div class="text-[10.5px] text-white/40 text-center mb-1.5">یا مطمئن‌تر: شهرت رو دستی انتخاب کن</div>
+                <select id="qibla-city-select" onchange="app.useManualCity(this.value)" class="w-full text-xs bg-white/10 text-white rounded-xl px-3 py-2.5 outline-none">
+                    <option value="">— انتخاب شهر —</option>
+                    <option value="35.6892,51.3890">تهران</option>
+                    <option value="36.2605,59.6168">مشهد</option>
+                    <option value="32.6546,51.6680">اصفهان</option>
+                    <option value="29.5918,52.5837">شیراز</option>
+                    <option value="38.0800,46.2919">تبریز</option>
+                    <option value="34.6416,50.8746">قم</option>
+                    <option value="31.3183,48.6706">اهواز</option>
+                    <option value="36.5659,53.0588">ساری</option>
+                    <option value="37.2808,49.5832">رشت</option>
+                    <option value="30.2839,56.9694">کرمان</option>
+                </select>
+            </div>
+
             <div class="text-[10.5px] text-white/30 leading-6 mt-4 px-2 text-center">
-                دقت قطب‌نما به سنسورهای گوشی و مرورگر بستگی داره. اگه جهت‌یابی درست نبود، گوشی رو به‌شکل عدد ۸ چند بار در هوا حرکت بده تا کالیبره بشه. روی برخی مرورگرها یا داخل اپ بله ممکنه فقط زاویهٔ عددی قبله در دسترس باشه، نه چرخش زندهٔ قطب‌نما.
+                دقت قطب‌نما به سنسورهای گوشی و مرورگر بستگی داره. اگه جهت‌یابی درست نبود، گوشی رو به‌شکل عدد ۸ چند بار در هوا حرکت بده تا کالیبره بشه. روی برخی مرورگرها یا داخل اپ بله ممکنه فقط زاویهٔ عددی قبله در دسترس باشه، نه چرخش زندهٔ قطب‌نما. اگه مختصات نمایش‌داده‌شده با شهر واقعی‌ات فرق داره، از لیست بالا شهر خودت رو انتخاب کن تا مطمئن باشی.
             </div>
         </div>
     </div>
@@ -866,15 +884,12 @@
             // button, not the editor screen, not the "how to upload to GitHub"
             // instructions — exists in the page's initial HTML at all. It's only ever
             // constructed by JavaScript, and only after the correct unlock gesture.
-            // (Being fully honest: this raises the bar against casual view-source
-            // snooping, but anyone opening browser devtools while it's active could
-            // still find it — there is no such thing as a real secret in client-only
-            // code without a server-side login.)
+            // Deliberately NOT tied to any URL parameter — a URL is something that can
+            // get shared/reused, and anyone opening that exact link would then unlock
+            // it too. The only way in is the private tap gesture below.
             checkAdminUnlock() {
-                const urlUnlock = new URLSearchParams(location.search).get('admin') === '1';
                 const remembered = localStorage.getItem('zekrino_admin_unlocked') === '1';
-                if (urlUnlock) localStorage.setItem('zekrino_admin_unlocked', '1');
-                if (urlUnlock || remembered) this.revealAdminButton();
+                if (remembered) this.revealAdminButton();
             }
             revealAdminButton() {
                 const slot = document.getElementById('settings-extra-slot');
@@ -1383,20 +1398,9 @@
                 this.setQiblaStatus('در حال دریافت موقعیت مکانی…');
                 navigator.geolocation.getCurrentPosition(
                     (pos) => {
-                        this.qiblaBearing = this.calculateQiblaBearing(pos.coords.latitude, pos.coords.longitude);
-                        document.getElementById('qibla-numbers').classList.remove('hidden');
-                        document.getElementById('qibla-bearing-text').innerText = `${Math.round(this.qiblaBearing).toLocaleString('fa-IR')}°`;
-                        this.setQiblaStatus('موقعیت پیدا شد. حالا قطب‌نمای گوشی رو فعال کن تا تسبیح خودش بچرخه.');
-
-                        const needsExplicitPermission = typeof DeviceOrientationEvent !== 'undefined'
-                            && typeof DeviceOrientationEvent.requestPermission === 'function';
-                        if (needsExplicitPermission) {
-                            document.getElementById('qibla-compass-btn').classList.remove('hidden');
-                        } else if (window.DeviceOrientationEvent) {
-                            this.attachOrientationListener();
-                        } else {
-                            this.setQiblaStatus(`موقعیت پیدا شد، اما این دستگاه/مرورگر قطب‌نمای زنده نداره. قبله در زاویهٔ ${Math.round(this.qiblaBearing).toLocaleString('fa-IR')}° از شمال جغرافیایی است — با یک قطب‌نمای معمولی این زاویه رو پیدا کن.`);
-                        }
+                        const acc = Math.round(pos.coords.accuracy || 0);
+                        this.applyQiblaCoords(pos.coords.latitude, pos.coords.longitude,
+                            `دقت مکان‌یابی: ${acc.toLocaleString('fa-IR')} متر — اگه این عدد خیلی بزرگه (چند کیلومتر)، یعنی موقعیت از روی IP حدس زده شده نه GPS واقعی؛ بهتره از لیست شهرها پایین انتخاب کنی.`);
                     },
                     (err) => {
                         const msgs = {
@@ -1404,11 +1408,37 @@
                             2: 'موقعیت مکانی در دسترس نیست.',
                             3: 'زمان دریافت موقعیت تمام شد.'
                         };
-                        this.setQiblaStatus(msgs[err.code] || 'خطا در دریافت موقعیت مکانی.');
+                        this.setQiblaStatus((msgs[err.code] || 'خطا در دریافت موقعیت مکانی.') + ' می‌تونی از لیست شهرها پایین هم انتخاب کنی.');
                     },
                     { enableHighAccuracy: true, timeout: 10000 }
                 );
             }
+
+            // manual override — picks exact known coordinates for a city, bypassing
+            // GPS/IP geolocation entirely. Useful when device location is unreliable
+            // (common inside WebViews) since these coordinates are always correct.
+            useManualCity(value) {
+                if (!value) return;
+                const [lat, lng] = value.split(',').map(Number);
+                this.applyQiblaCoords(lat, lng, 'مختصات این شهر به‌صورت دستی وارد شد (بدون نیاز به GPS).');
+            }
+
+            applyQiblaCoords(lat, lng, note) {
+                this.qiblaBearing = this.calculateQiblaBearing(lat, lng);
+                document.getElementById('qibla-numbers').classList.remove('hidden');
+                document.getElementById('qibla-bearing-text').innerText = `${Math.round(this.qiblaBearing).toLocaleString('fa-IR')}°`;
+                document.getElementById('qibla-coords-text').innerText = `مختصات: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+                this.setQiblaStatus(`${note} حالا اگه خواستی قطب‌نمای گوشی رو هم فعال کن تا زنده بچرخه.`);
+
+                const needsExplicitPermission = typeof DeviceOrientationEvent !== 'undefined'
+                    && typeof DeviceOrientationEvent.requestPermission === 'function';
+                if (needsExplicitPermission) {
+                    document.getElementById('qibla-compass-btn').classList.remove('hidden');
+                } else if (window.DeviceOrientationEvent) {
+                    this.attachOrientationListener();
+                }
+            }
+
 
             requestCompassPermission() {
                 DeviceOrientationEvent.requestPermission()
@@ -1432,11 +1462,22 @@
             handleOrientation(event) {
                 let heading = null;
                 if (typeof event.webkitCompassHeading === 'number') {
-                    heading = event.webkitCompassHeading; // iOS Safari: already a compass heading
-                } else if (event.alpha !== null && event.alpha !== undefined) {
-                    heading = (360 - event.alpha) % 360; // common mapping for the standard DeviceOrientation alpha
+                    heading = event.webkitCompassHeading; // iOS Safari: already a true compass heading
+                } else if (event.absolute === true && event.alpha !== null && event.alpha !== undefined) {
+                    // only trust alpha when the browser confirms it's referenced to true
+                    // north (absolute) — otherwise it's relative to wherever the page
+                    // happened to load facing, which silently gives a confident-looking
+                    // but wrong direction (this was the bug)
+                    heading = (360 - event.alpha) % 360;
                 }
-                if (heading === null || this.qiblaBearing === undefined) return;
+
+                if (heading === null || this.qiblaBearing === undefined) {
+                    if (!this._warnedUnreliableCompass) {
+                        this._warnedUnreliableCompass = true;
+                        this.setQiblaStatus(`قطب‌نمای زندهٔ این گوشی/مرورگر قابل‌اعتماد نیست، پس به‌جای نشون‌دادن یک جهت اشتباه، فقط عدد دقیق رو می‌دیم: قبله در زاویهٔ ${Math.round(this.qiblaBearing || 0).toLocaleString('fa-IR')}° از شمال جغرافیایی است. با یک قطب‌نمای واقعی (مثلاً اپ Compass گوشی) این زاویه رو از شمال پیدا کن.`);
+                    }
+                    return;
+                }
 
                 const rotation = (this.qiblaBearing - heading + 360) % 360;
                 document.getElementById('qibla-needle').style.transform = `rotate(${rotation}deg)`;
