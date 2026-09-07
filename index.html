@@ -43,8 +43,7 @@
         @keyframes counter-pulse { 0% { transform: scale(1); } 40% { transform: scale(1.14); } 100% { transform: scale(1); } }
         .counter-pulse { animation: counter-pulse .28s ease; }
         /* subtle moving light reflection across the tasbih pad backdrop */
-        #pad-sheen { background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.35), transparent 45%); animation: sheen-move 7s ease-in-out infinite; }
-        @keyframes sheen-move { 0%,100% { background-position: 0% 0%; } 50% { background-position: 30% 20%; } }
+        /* moving light reflection removed with the old backdrop div */
         .tab-panel { display: none; }
         .tab-panel.active { display: flex; flex-direction: column; }
         .nav-btn.active-tab i, .nav-btn.active-tab span { color: #059669; }
@@ -118,9 +117,6 @@
             <div class="flex flex-col items-center justify-center my-auto space-y-4 py-2">
 
                 <div id="tasbih-pad" class="relative w-full max-w-[300px] aspect-square mx-auto rounded-full cursor-pointer active:scale-[0.98] transition select-none touch-none">
-                    <div class="absolute inset-3 rounded-full bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-800/50 dark:to-slate-900/60 shadow-inner overflow-hidden">
-                        <div id="pad-sheen" class="absolute inset-0"></div>
-                    </div>
                     <svg id="beads-svg" class="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 -32 200 232">
                         <defs>
                             <radialGradient id="beadGrad" cx="32%" cy="26%" r="80%">
@@ -135,15 +131,28 @@
                                 <feGaussianBlur stdDeviation="2.4" result="blur" />
                                 <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
                             </filter>
+                            <radialGradient id="padBackdropLight" cx="35%" cy="30%" r="75%">
+                                <stop offset="0%" stop-color="#f8fafc" />
+                                <stop offset="100%" stop-color="#e2e8f0" />
+                            </radialGradient>
+                            <radialGradient id="padBackdropDark" cx="35%" cy="30%" r="75%">
+                                <stop offset="0%" stop-color="#334155" />
+                                <stop offset="100%" stop-color="#0f172a" />
+                            </radialGradient>
                         </defs>
-                        <circle cx="100" cy="106" r="68" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2 6" class="text-emerald-500/25" />
+                        <!-- backdrop disc — same center/radius family as the bead ring, so it's
+                             always perfectly concentric with the beads instead of a separately
+                             positioned square-centered div (which caused the "uneven" look) -->
+                        <circle cx="100" cy="106" r="80" fill="url(#padBackdropLight)" class="dark:hidden" />
+                        <circle cx="100" cy="106" r="80" fill="url(#padBackdropDark)" class="hidden dark:block" />
+                        <circle cx="100" cy="106" r="64" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2 6" class="text-emerald-500/25" />
                         <g id="tasbih-rotator">
                             <g id="beads-ring"></g>
                             <!-- imam bead + tassel rotate together with the loop, like actually spinning a real tasbih in hand -->
                             <g id="imam-tassel" pointer-events="none">
                                 <g id="tassel-strands"></g>
-                                <ellipse cx="100" cy="23" rx="6.5" ry="3.2" fill="url(#beadGradGold)" stroke="#fff" stroke-width="0.6" stroke-opacity="0.4" />
-                                <circle cx="100" cy="38" r="14" fill="url(#beadGradGold)" stroke="#fff" stroke-width="1" stroke-opacity="0.55" />
+                                <ellipse cx="100" cy="27" rx="6.5" ry="3.2" fill="url(#beadGradGold)" stroke="#fff" stroke-width="0.6" stroke-opacity="0.4" />
+                                <circle cx="100" cy="42" r="15" fill="url(#beadGradGold)" stroke="#fff" stroke-width="1" stroke-opacity="0.55" />
                             </g>
                         </g>
                     </svg>
@@ -477,6 +486,9 @@
             { group: '🌙 شب', items: [
                 { name: 'لا اله الا الله', target: 100, beadCount: 33, beadStyle: 'shahmaghsoudi' },
                 { name: 'ذکر خواب (استغفرالله)', target: 33, beadCount: 33, beadStyle: 'khaki' }
+            ]},
+            { group: '🌊 در سختی‌ها', items: [
+                { name: 'ذکر یونسیه (لَا إِلَٰهَ إِلَّا أَنتَ سُبْحَانَكَ إِنِّي كُنتُ مِنَ الظَّالِمِينَ)', target: 100, beadCount: 33, beadStyle: 'firoozeh' }
             ]}
         ];
 
@@ -540,7 +552,7 @@
             dhikrs: [
                 { id: 'd-1', name: 'صلوات بر محمد و آل محمد', target: 100, beadCount: 33, count: 0, lifetimeCount: 0, history: {}, lastActiveDate: null, beadStyle: 'shahmaghsoudi', favorite: true },
                 { id: 'd-2', name: 'استغفار (استغفرالله ربی)', target: 100, beadCount: 33, count: 0, lifetimeCount: 0, history: {}, lastActiveDate: null, beadStyle: 'aqiq', favorite: true },
-                { id: 'd-3', name: 'سبحان‌الله و الحمدلله', target: 33, beadCount: 33, count: 0, lifetimeCount: 0, history: {}, lastActiveDate: null, beadStyle: 'firoozeh', favorite: false },
+                { id: 'd-3', name: 'سُبْحانَ اللهِ، اَلْحَمْدُ لِلهِ، لا إلهَ إلاّ اللهُ، اللهُ أکْبَرُ', target: 33, beadCount: 33, count: 0, lifetimeCount: 0, history: {}, lastActiveDate: null, beadStyle: 'firoozeh', favorite: false },
                 { id: 'd-4', name: 'یا الله / یا رحمان', target: 100, beadCount: 33, count: 0, lifetimeCount: 0, history: {}, lastActiveDate: null, beadStyle: 'yellow', favorite: false },
                 { ...DEFAULT_COMBO_DHIKR }
             ]
@@ -589,6 +601,14 @@
                             beadStyle: parsed.settings.tasbihModel || 'shahmaghsoudi', ...d
                         }
                     ));
+                    // one-time content fix: the old default text for d-3 gets upgraded to
+                    // the fuller four-phrase version — but only if the user never renamed
+                    // it themselves, so we never clobber someone's own edit
+                    parsed.dhikrs.forEach(d => {
+                        if (d.id === 'd-3' && d.name === 'سبحان‌الله و الحمدلله') {
+                            d.name = 'سُبْحانَ اللهِ، اَلْحَمْدُ لِلهِ، لا إلهَ إلاّ اللهُ، اللهُ أکْبَرُ';
+                        }
+                    });
                     if (!parsed.dhikrs.some(d => d.id === 'combo-tasbih')) {
                         parsed.dhikrs.push({ ...DEFAULT_COMBO_DHIKR });
                     }
@@ -657,7 +677,7 @@
 
             renderTassel() {
                 const strandCount = 22;
-                const startX = 100, startY = 20;
+                const startX = 100, startY = 24;
                 const colors = ['#611a29', '#7a2035', '#8b2942', '#9c3350', '#6b1b2c'];
                 let paths = '';
                 for (let i = 0; i < strandCount; i++) {
@@ -1112,7 +1132,7 @@
                 document.getElementById('beadGradLight').setAttribute('stop-color', this.shadeColor(modelInfo.color, 40));
                 document.getElementById('beadGradDark').setAttribute('stop-color', this.shadeColor(modelInfo.color, -35));
 
-                const cx = 100, cy = 106, r = 68;
+                const cx = 100, cy = 106, r = 64;
                 let svg = '';
                 for (let i = 0; i < N; i++) {
                     const angle = -Math.PI / 2 + (i / N) * Math.PI * 2;
@@ -1120,7 +1140,7 @@
                     const y = cy + r * Math.sin(angle);
                     const isSpacer = spacerIndices.has(i) && i !== 0;
                     const isActive = i === ringIndex;
-                    const radius = isActive ? 12 : (isSpacer ? 8 : 7.2);
+                    const radius = isActive ? 13.5 : (isSpacer ? 9.3 : 8.5);
                     const filterAttr = isActive ? 'filter="url(#beadGlow)"' : '';
                     const strokeAttr = isSpacer ? 'stroke="#d6b24e" stroke-width="2.2"' : (isActive ? 'stroke="#ffffff" stroke-width="1.3" stroke-opacity="0.85"' : '');
                     const flashClass = isActive ? 'bead-flash' : '';
@@ -1837,3 +1857,4 @@
     </script>
 </body>
 </html>
+               
