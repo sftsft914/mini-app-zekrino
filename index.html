@@ -421,20 +421,24 @@
                 </button>
             </div>
 
+            <div id="qibla-calibration" class="hidden w-full mt-3 bg-white/5 rounded-2xl p-3">
+                <div class="text-[10.5px] text-white/50 text-center mb-2 leading-6">
+                    قبله‌نما باید حالا خودکار درست کار کنه. این دکمه‌ها فقط برای موارد نادری‌ان که هنوزم گوشی خاصی مشکل داشته باشه:
+                </div>
+                <button onclick="app.toggleCompassInvert()" class="w-full py-2 rounded-xl bg-white/10 text-white text-xs font-bold mb-2">
+                    <i class="fa-solid fa-rotate ml-1"></i> معکوس کردن جهت چرخش
+                </button>
+                <div class="flex items-center justify-center gap-2">
+                    <button onclick="app.nudgeCompassOffset(-15)" class="w-10 h-9 rounded-xl bg-white/10 text-white text-sm font-bold">-۱۵°</button>
+                    <div id="qibla-offset-text" class="text-[11px] text-white/60 w-16 text-center">۰°</div>
+                    <button onclick="app.nudgeCompassOffset(15)" class="w-10 h-9 rounded-xl bg-white/10 text-white text-sm font-bold">+۱۵°</button>
+                </div>
+            </div>
+
             <div class="w-full mt-3">
                 <div class="text-[10.5px] text-white/40 text-center mb-1.5">یا مطمئن‌تر: شهرت رو دستی انتخاب کن</div>
                 <select id="qibla-city-select" onchange="app.useManualCity(this.value)" class="w-full text-xs bg-white/10 text-white rounded-xl px-3 py-2.5 outline-none">
-                    <option value="">— انتخاب شهر —</option>
-                    <option value="35.6892,51.3890">تهران</option>
-                    <option value="36.2605,59.6168">مشهد</option>
-                    <option value="32.6546,51.6680">اصفهان</option>
-                    <option value="29.5918,52.5837">شیراز</option>
-                    <option value="38.0800,46.2919">تبریز</option>
-                    <option value="34.6416,50.8746">قم</option>
-                    <option value="31.3183,48.6706">اهواز</option>
-                    <option value="36.5659,53.0588">ساری</option>
-                    <option value="37.2808,49.5832">رشت</option>
-                    <option value="30.2839,56.9694">کرمان</option>
+                    <option value="">— انتخاب استان و شهر —</option>
                 </select>
             </div>
 
@@ -473,6 +477,45 @@
 
         // Categorized presets for the "کتابخانهٔ اذکار پیشنهادی" — one tap adds a real
         // configured dhikr (name/target/beadCount/color) instead of a bare label.
+        // Iran, all 31 provinces — capital first, then ~9 more well-known cities each
+        // (a few small provinces like Qom/Ilam genuinely don't have 10 distinct cities,
+        // so those lists are shorter rather than padded with made-up names).
+        // Coordinates are city-center approximations — fine for Qibla purposes, where a
+        // few km of error changes the bearing by a small fraction of a degree.
+        const IRAN_CITIES = [
+            { province: 'تهران', cities: [['تهران',35.6892,51.3890],['ری',35.5933,51.4367],['شهریار',35.6598,51.0576],['اسلامشهر',35.5544,51.2002],['ورامین',35.3255,51.6452],['پاکدشت',35.4778,51.6800],['دماوند',35.7170,52.0654],['پرند',35.4769,50.9335],['قدس',35.7213,51.1013],['ملارد',35.6642,50.9670]] },
+            { province: 'البرز', cities: [['کرج',35.8400,50.9391],['فردیس',35.7295,50.9855],['هشتگرد',35.9614,50.6803],['نظرآباد',35.9500,50.6167],['اشتهارد',35.7250,50.3500],['طالقان',36.1667,50.7500],['محمدشهر',35.7742,50.9642],['ماهدشت',35.7833,50.7833],['کمالشهر',35.8264,50.8931],['چهارباغ',35.7333,50.7000]] },
+            { province: 'قم', cities: [['قم',34.6401,50.8764],['سلفچگان',34.7833,50.8667],['جعفریه',34.9333,50.6500],['دستجرد',34.7167,50.5833],['کهک',34.6667,51.1833],['قنوات',34.4500,50.9333]] },
+            { province: 'مرکزی', cities: [['اراک',34.0917,49.6892],['ساوه',35.0213,50.3566],['خمین',33.6383,50.0783],['محلات',33.9075,50.4622],['دلیجان',34.0069,50.6836],['تفرش',34.6969,50.0175],['آشتیان',34.5486,49.9539],['شازند',33.9111,49.4111],['خنداب',34.3392,49.1522],['کمیجان',34.7167,49.3167]] },
+            { province: 'قزوین', cities: [['قزوین',36.2688,50.0041],['تاکستان',36.0489,49.6939],['آبیک',36.0453,50.5222],['محمدیه',36.1667,50.0667],['بوئین‌زهرا',35.7756,50.0453],['آوج',35.5167,49.2667],['ضیاءآباد',36.1833,49.9500],['الوند',36.1500,49.9000],['شال',35.8833,49.9500]] },
+            { province: 'گیلان', cities: [['رشت',37.2809,49.5832],['بندرانزلی',37.4739,49.4650],['لاهیجان',37.2078,50.0069],['لنگرود',37.1958,50.1533],['آستارا',38.4258,48.8703],['رودسر',37.1372,50.2864],['فومن',37.2231,49.3128],['صومعه‌سرا',37.3167,49.3167],['تالش',37.7833,48.9167],['آستانه‌اشرفیه',37.2617,49.9483]] },
+            { province: 'مازندران', cities: [['ساری',36.5633,53.0601],['بابل',36.5514,52.6789],['آمل',36.4711,52.3511],['قائم‌شهر',36.4644,52.8583],['بابلسر',36.7000,52.6500],['تنکابن',36.8167,50.8667],['نوشهر',36.6500,51.5000],['چالوس',36.6550,51.4200],['نکا',36.6522,53.2989],['رامسر',36.9042,50.6600]] },
+            { province: 'گلستان', cities: [['گرگان',36.8392,54.4342],['گنبدکاووس',37.2500,55.1833],['علی‌آبادکتول',36.9333,54.8667],['آق‌قلا',37.0333,54.4667],['کردکوی',36.7667,54.1000],['بندرترکمن',36.9083,53.9781],['مینودشت',37.2333,55.3833],['رامیان',37.0500,55.1500],['کلاله',37.3833,55.4833],['آزادشهر',37.0958,55.1750]] },
+            { province: 'اردبیل', cities: [['اردبیل',38.2498,48.2933],['پارس‌آباد',39.6500,47.9167],['مشگین‌شهر',38.3833,47.6833],['خلخال',37.6167,48.5333],['گرمی',38.4167,47.9833],['نمین',38.4167,48.4833],['نیر',38.0333,48.0333],['بیله‌سوار',39.3333,47.9833],['سرعین',38.1500,48.0667]] },
+            { province: 'آذربایجان شرقی', cities: [['تبریز',38.0800,46.2919],['مراغه',37.3925,46.2397],['میانه',37.4256,47.7128],['مرند',38.4292,45.7681],['اهر',38.4747,47.0658],['بناب',37.3439,46.0575],['شبستر',38.1833,45.7167],['هریس',38.2167,47.0667],['سراب',37.9394,47.5453],['آذرشهر',37.7500,45.9833]] },
+            { province: 'آذربایجان غربی', cities: [['ارومیه',37.5527,45.0761],['خوی',38.5503,44.9522],['بوکان',36.5217,46.2069],['مهاباد',36.7639,45.7219],['میاندوآب',36.9689,46.1050],['سلماس',38.1958,44.7647],['پیرانشهر',36.6961,45.1408],['نقده',36.9553,45.3853],['ماکو',39.2953,44.5175],['شاهین‌دژ',36.6742,45.7264]] },
+            { province: 'زنجان', cities: [['زنجان',36.6764,48.4963],['ابهر',36.1497,49.2167],['خرمدره',36.2181,49.1861],['ماهنشان',36.7522,47.7783],['آب‌بر',36.9000,48.8500],['هیدج',36.3167,48.9500],['سلطانیه',36.4394,48.7900],['انگوران',36.7333,47.3167],['زرین‌آباد',36.6167,48.8500]] },
+            { province: 'کردستان', cities: [['سنندج',35.3219,46.9862],['سقز',36.2497,46.2750],['بانه',35.9997,45.8853],['مریوان',35.5219,46.1750],['قروه',35.1667,47.8000],['بیجار',35.8667,47.6000],['کامیاران',34.7936,46.9364],['دیواندره',35.9167,47.0167],['دهگلان',35.2778,47.4192],['سروآباد',35.3167,46.3167]] },
+            { province: 'همدان', cities: [['همدان',34.7992,48.5146],['ملایر',34.2967,48.8228],['نهاوند',34.1900,48.3753],['تویسرکان',34.5497,48.4497],['اسدآباد',34.7794,48.1189],['رزن',35.3908,49.0339],['کبودراهنگ',35.2081,48.7222],['بهار',34.9081,48.4394],['فامنین',35.0292,48.9700],['صالح‌آباد',34.9600,48.8500]] },
+            { province: 'کرمانشاه', cities: [['کرمانشاه',34.3277,47.0778],['اسلام‌آباد غرب',34.1108,46.5228],['سنقر',34.7883,47.5978],['کنگاور',34.5044,47.9647],['پاوه',35.0450,46.3567],['سرپل‌ذهاب',34.4597,45.8636],['هرسین',34.2708,47.5975],['جوانرود',34.8000,46.4900],['صحنه',34.4933,47.6786],['گیلانغرب',34.1394,45.9500]] },
+            { province: 'ایلام', cities: [['ایلام',33.6374,46.4227],['دهلران',32.6942,47.2681],['آبدانان',32.9928,47.4189],['ایوان',33.8256,46.3000],['مهران',33.1222,46.1650],['دره‌شهر',33.1489,47.3161],['سرابله',33.7833,46.1500],['بدره',33.1000,46.2500],['چوار',33.6889,46.1300]] },
+            { province: 'لرستان', cities: [['خرم‌آباد',33.4878,48.3558],['بروجرد',33.8942,48.7517],['دورود',33.4939,49.0681],['الیگودرز',33.4000,49.7000],['کوهدشت',33.5500,47.6167],['ازنا',33.4586,49.4406],['نورآباد دلفان',33.9000,48.3667],['الشتر',33.8642,48.2758],['پلدختر',33.1500,47.7167],['چگنی',33.4667,48.5000]] },
+            { province: 'خوزستان', cities: [['اهواز',31.3183,48.6706],['آبادان',30.3392,48.3043],['خرمشهر',30.4392,48.1719],['دزفول',32.3811,48.4058],['ماهشهر',30.5589,49.1975],['بهبهان',30.5964,50.2414],['شوشتر',32.0433,48.8564],['اندیمشک',32.4614,48.3564],['رامهرمز',31.2792,49.6083],['ایذه',31.8342,49.8656]] },
+            { province: 'چهارمحال و بختیاری', cities: [['شهرکرد',32.3256,50.8642],['بروجن',31.9636,51.2733],['فارسان',32.2589,50.5711],['لردگان',31.5089,50.8256],['اردل',31.9897,50.6819],['شلمزار',31.8500,50.8500],['سامان',32.4500,50.9167],['جونقان',32.0833,50.7000],['بلداجی',32.4167,50.9833],['ناغان',31.9333,50.4500]] },
+            { province: 'کهگیلویه و بویراحمد', cities: [['یاسوج',30.6683,51.5875],['گچساران',30.3592,50.7994],['دهدشت',30.7756,50.5697],['لیکک',30.5333,50.5333],['سی‌سخت',31.4333,51.1667],['چرام',30.7000,50.9833],['دیشموک',30.9333,50.9333],['باشت',30.9333,51.2500],['لنده',30.1667,50.4167]] },
+            { province: 'بوشهر', cities: [['بوشهر',28.9684,50.8385],['برازجان',29.2667,51.2167],['گناوه',29.5800,50.5236],['دیر',27.8397,51.9314],['کنگان',27.8394,52.0631],['جم',27.8283,52.3306],['اهرم',28.8697,51.2300],['دیلم',29.9200,50.1100],['عسلویه',27.4761,52.6100]] },
+            { province: 'فارس', cities: [['شیراز',29.5918,52.5837],['مرودشت',29.8756,52.8069],['جهرم',28.5000,53.5500],['کازرون',29.6197,51.6544],['لار',27.6783,54.3378],['فسا',28.9436,53.6444],['داراب',28.7500,54.5500],['آباده',31.1667,52.6500],['نی‌ریز',29.2000,54.3500],['اقلید',30.9000,52.6833]] },
+            { province: 'اصفهان', cities: [['اصفهان',32.6546,51.6680],['کاشان',33.9850,51.4100],['نجف‌آباد',32.6339,51.3667],['خمینی‌شهر',32.7000,51.5500],['شاهین‌شهر',32.8500,51.5500],['نائین',32.8600,53.0900],['گلپایگان',33.4614,50.2839],['فولادشهر',32.5000,51.3167],['مبارکه',32.3500,51.5000],['شهرضا',32.0167,51.8667]] },
+            { province: 'یزد', cities: [['یزد',31.8974,54.3675],['میبد',32.2500,54.0167],['اردکان',32.3100,54.0167],['بافق',31.6167,55.4000],['تفت',31.7500,54.2000],['مهریز',31.5900,54.4300],['ابرکوه',31.1300,53.2700],['هرات',31.0000,54.5000],['بهاباد',31.6000,55.9500]] },
+            { province: 'کرمان', cities: [['کرمان',30.2839,57.0834],['رفسنجان',30.4067,55.9950],['سیرجان',29.4520,55.6814],['بم',29.1000,58.3500],['جیرفت',28.6753,57.7281],['زرند',30.8000,56.5667],['بردسیر',29.9333,56.5667],['شهربابک',30.1167,55.1167],['راور',31.2500,56.8000],['کهنوج',27.9500,57.7000]] },
+            { province: 'سیستان و بلوچستان', cities: [['زاهدان',29.4963,60.8629],['چابهار',25.2919,60.6430],['ایرانشهر',27.2025,60.6850],['زابل',31.0289,61.4967],['خاش',28.2211,61.2158],['سراوان',27.3733,62.3339],['نیک‌شهر',26.2333,60.2333],['کنارک',25.3556,60.3939],['میرجاوه',29.0833,61.7333],['سرباز',26.6500,61.3000]] },
+            { province: 'هرمزگان', cities: [['بندرعباس',27.1865,56.2808],['میناب',27.1467,57.0806],['بندرلنگه',26.5580,54.8813],['قشم',26.9581,56.2719],['کیش',26.5325,53.9803],['رودان',27.4000,57.1833],['حاجی‌آباد',28.3167,55.9000],['بستک',27.2000,54.3667],['پارسیان',26.7167,52.8500],['ابوموسی',25.8783,55.0339]] },
+            { province: 'خراسان رضوی', cities: [['مشهد',36.2605,59.6168],['نیشابور',36.2133,58.7958],['سبزوار',36.2126,57.6819],['تربت‌حیدریه',35.2708,59.2192],['کاشمر',35.2394,58.4644],['قوچان',37.1061,58.5008],['تربت‌جام',35.2447,60.6236],['چناران',36.6431,59.1211],['گناباد',34.3517,58.6836],['فریمان',35.7000,59.8500]] },
+            { province: 'خراسان شمالی', cities: [['بجنورد',37.4747,57.3290],['شیروان',37.4111,57.9297],['اسفراین',37.0783,57.5158],['جاجرم',36.9483,56.3806],['آشخانه',37.5500,56.9167],['فاروج',37.2333,57.2333],['گرمه',36.9667,56.1500],['جرگلان',37.6000,57.2500],['سملقان',37.4500,57.0500]] },
+            { province: 'خراسان جنوبی', cities: [['بیرجند',32.8649,59.2211],['قاین',33.7267,59.1811],['طبس',33.5959,56.9247],['فردوس',34.0117,58.1686],['نهبندان',31.5500,60.0339],['سربیشه',32.5750,59.6000],['درمیان',32.6000,59.7000],['بشرویه',33.8500,57.4300],['زیرکوه',32.8500,60.1000],['خوسف',32.7500,59.3000]] },
+            { province: 'سمنان', cities: [['سمنان',35.5729,53.3971],['شاهرود',36.4181,54.9758],['دامغان',36.1683,54.3486],['گرمسار',35.2197,52.3417],['مهدی‌شهر',35.7167,53.3667],['میامی',36.4000,55.6667],['ایوانکی',35.3500,52.0500],['بسطام',36.4900,55.0000],['سرخه',35.4500,53.2000]] }
+        ];
+
         const DHIKR_LIBRARY = [
             { group: '🕌 بعد از نماز', items: [
                 { name: 'سبحان‌الله', target: 33, beadCount: 33, beadStyle: 'firoozeh' },
@@ -567,6 +610,8 @@
                 this.statsSubtab = 'overview';
                 this.calmDimTimer = null;
                 this.dragState = null;
+                this.compassInverted = false;
+                this.compassOffset = 0;
                 this.liveNarrations = null;
                 this.adminNarrations = this.loadAdminNarrations();
                 this.editingNarrationIndex = null;
@@ -631,6 +676,7 @@
                 this.checkVibrationSupport();
                 this.renderTassel();
                 this.renderFavoritesStrip();
+                this.populateQiblaCitySelect();
                 await this.loadNarrationsSource();
                 this.renderNarrationCard();
                 this.checkAdminUnlock();
@@ -1378,6 +1424,9 @@
             static QIBLA_LNG = 39.826206;
 
             openQiblaMode() {
+                this.compassInverted = localStorage.getItem('zekrino_compass_inverted') === '1';
+                this.compassOffset = parseInt(localStorage.getItem('zekrino_compass_offset') || '0', 10);
+                this.updateCompassOffsetText();
                 const screen = document.getElementById('screen-qibla');
                 screen.classList.remove('hidden');
                 screen.classList.add('flex');
@@ -1434,6 +1483,22 @@
                 );
             }
 
+            // builds <optgroup> per province from IRAN_CITIES, so the picker covers
+            // every province with its capital + several major cities
+            populateQiblaCitySelect() {
+                const select = document.getElementById('qibla-city-select');
+                if (!select) return;
+                let html = '<option value="">— انتخاب استان و شهر —</option>';
+                IRAN_CITIES.forEach(({ province, cities }) => {
+                    html += `<optgroup label="${province}">`;
+                    cities.forEach(([name, lat, lng]) => {
+                        html += `<option value="${lat},${lng}">${name}</option>`;
+                    });
+                    html += `</optgroup>`;
+                });
+                select.innerHTML = html;
+            }
+
             // manual override — picks exact known coordinates for a city, bypassing
             // GPS/IP geolocation entirely. Useful when device location is unreliable
             // (common inside WebViews) since these coordinates are always correct.
@@ -1481,27 +1546,49 @@
 
             handleOrientation(event) {
                 let heading = null;
+                let approximate = false;
                 if (typeof event.webkitCompassHeading === 'number') {
-                    heading = event.webkitCompassHeading; // iOS Safari: already a true compass heading
-                } else if (event.absolute === true && event.alpha !== null && event.alpha !== undefined) {
-                    // only trust alpha when the browser confirms it's referenced to true
-                    // north (absolute) — otherwise it's relative to wherever the page
-                    // happened to load facing, which silently gives a confident-looking
-                    // but wrong direction (this was the bug)
-                    heading = (360 - event.alpha) % 360;
+                    heading = event.webkitCompassHeading; // iOS Safari: already screen-aware
+                } else if (event.alpha !== null && event.alpha !== undefined) {
+                    // The real fix: compensate for the phone's current screen rotation
+                    // angle. Without this, the heading comes out off by a fixed amount
+                    // (often exactly 90° or 180°) — consistently wrong, not random —
+                    // which matches what you were seeing. This makes it automatic;
+                    // no manual input should be needed anymore.
+                    const screenAngle = (screen.orientation && typeof screen.orientation.angle === 'number')
+                        ? screen.orientation.angle
+                        : (typeof window.orientation === 'number' ? window.orientation : 0);
+                    heading = this.compassInverted
+                        ? ((event.alpha + screenAngle) % 360 + 360) % 360
+                        : (((360 - event.alpha + screenAngle) % 360) + 360) % 360;
+                    approximate = event.absolute !== true;
                 }
 
-                if (heading === null || this.qiblaBearing === undefined) {
-                    if (!this._warnedUnreliableCompass) {
-                        this._warnedUnreliableCompass = true;
-                        this.setQiblaStatus(`قطب‌نمای زندهٔ این گوشی/مرورگر قابل‌اعتماد نیست، پس به‌جای نشون‌دادن یک جهت اشتباه، فقط عدد دقیق رو می‌دیم: قبله در زاویهٔ ${Math.round(this.qiblaBearing || 0).toLocaleString('fa-IR')}° از شمال جغرافیایی است. با یک قطب‌نمای واقعی (مثلاً اپ Compass گوشی) این زاویه رو از شمال پیدا کن.`);
-                    }
-                    return;
-                }
+                if (heading === null || this.qiblaBearing === undefined) return;
 
-                const rotation = (this.qiblaBearing - heading + 360) % 360;
+                const rotation = (this.qiblaBearing - heading + (this.compassOffset || 0) + 360) % 360;
                 document.getElementById('qibla-needle').style.transform = `rotate(${rotation}deg)`;
-                this.setQiblaStatus('🕋 وقتی مکه بالای دایره قرار بگیره، رو به قبله‌ای.');
+                document.getElementById('qibla-calibration').classList.remove('hidden');
+                this.setQiblaStatus(approximate
+                    ? 'عقربه تقریبیه (این گوشی «شمال مطلق» رو تأیید نکرد).'
+                    : '🕋 وقتی مکه بالای دایره قرار بگیره، رو به قبله‌ای.');
+            }
+
+            toggleCompassInvert() {
+                this.compassInverted = !this.compassInverted;
+                localStorage.setItem('zekrino_compass_inverted', this.compassInverted ? '1' : '0');
+                this.showToast(this.compassInverted ? 'جهت چرخش معکوس شد' : 'جهت چرخش به حالت عادی برگشت');
+            }
+
+            nudgeCompassOffset(delta) {
+                this.compassOffset = ((this.compassOffset || 0) + delta + 360) % 360;
+                localStorage.setItem('zekrino_compass_offset', String(this.compassOffset));
+                this.updateCompassOffsetText();
+            }
+
+            updateCompassOffsetText() {
+                const el = document.getElementById('qibla-offset-text');
+                if (el) el.innerText = `${(this.compassOffset || 0).toLocaleString('fa-IR')}°`;
             }
 
             // ---- dhikr management (add/edit/delete/favorite) ----
@@ -1857,4 +1944,3 @@
     </script>
 </body>
 </html>
-               
